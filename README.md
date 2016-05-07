@@ -1,2 +1,2 @@
 # Projects
-# just need a place to dumb all of my scripts
+# just need a place to dump all of my scripts
