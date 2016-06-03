@@ -7,6 +7,8 @@
 ## NONINTUITIVENESS = 8222334634
 def find_in_permutation(word):
     from math import factorial
+    import time
+    start_time = time.clock()
 
     letters = []
     for char in word:
@@ -43,6 +45,7 @@ def find_in_permutation(word):
             set_letters.pop(set_letters.index(ch))
         else:
             continue
+    print time.clock() - start_time,"seconds"
     return location
 
 find_in_permutation("NONINTUITIVENESS")
