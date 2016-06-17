@@ -15,7 +15,7 @@ def page_names():
     return pages
 
 def choose_option():
-    print("============================================================================")
+    print("=====================================================================")
     print("Welcome to the L.I.S.T")
     print("Choose an option to proceede")
     options = ("Query", "Update Existing", "Add/Remove Column", "Add/Remove Item", "Reports", "Count", "Quit")
@@ -25,93 +25,111 @@ def choose_option():
     return choice
 
 def query():
-    pn = str(raw_input("Give me the part number or just tell me what you are looking for.\n"))
-    discriptors = pn.split()
-    nums = len(discriptors)
-    things = ""
-    l = ""
-    for word in discriptors:
-        if word != discriptors[nums-1]:
-            l += "'%"+word + "%' AND Description LIKE "
-        else:
-            l += "'%"+word+"%'"
-    c.execute("SELECT * FROM Inventory WHERE Description LIKE "+l+" OR Part_Number=?", (pn,))
-    results = c.fetchall()
-    print("\nHere's what I found:")
-    for res in results:
-        Id, PartNum, SubCat, Desc, Stock, Price, Percent, Totdollars = res
-        print("\nItem Id: %s \nPart Number: %s \nDescription: %s \nand you have %s in stock at %s each\nTotal value of %s") % (Id, PartNum, Desc, Stock, Price, Totdollars)
+    with conn:
+        c = conn.cursor()
+        pn = str(raw_input("Give me the part number or just tell me what you are looking for.\n"))
+        discriptors = pn.split()
+        nums = len(discriptors)
+        things = ""
+        l = ""
+        for word in discriptors:
+            if word != discriptors[nums-1]:
+                l += "'%"+word + "%' AND Description LIKE "
+            else:
+                l += "'%"+word+"%'"
+        c.execute("SELECT * FROM Inventory WHERE Description LIKE "+l+" OR Part_Number=?", (pn,))
+        results = c.fetchall()
+        if results != []:
+            print("\nHere's what I found:")
+            for res in results:
+                if res in results:
+                    Id, PartNum, SubCat, Desc, Stock, Price, Percent, Totdollars = res
+                    print("\nItem Id: %s \nPart Number: %s \nDescription: %s \nand you have %s in stock at %s each\nTotal value of %s") % (Id, PartNum, Desc, Stock, Price, Totdollars)
+        if results == []:
+            print "I can't seem to find that."
+
 
 def update_existing():
-    part = str(raw_input("I'm going to need the part number of the item.\n"))
-    for row in c.execute("SELECT * FROM Inventory WHERE Part_Number=?", (part,)):
-        Id, PartNum, SubCat, Desc, Stock, Price, Percent, Totdollars = row
-        print("\nHere ya go..")
-        print("Item Id: %s\nPart Number: %s\nSub Category: %s\nDescription: %s\nTotal in Stock: %s\nList Price: %s\nPercent of cost: %s\nTotal Value of Stock: %s") % (row)
-    columns = ('Id', 'Part Number', 'Category', 'Description', 'Stock', 'Price', 'Percent', 'Value')
-    print("\nWhat are changing about this item?")
-    print("Choose a number")
-    for x in columns:
-        print columns.index(x), x
-    col = int(raw_input("> "))
-    new = "'"+raw_input("What is the new value?:  ")+"'"
-    stack = columns[col]
+    with conn:
+        c = conn.cursor()
+        part = str(raw_input("I'm going to need the part number of the item.\n"))
+        for row in c.execute("SELECT * FROM Inventory WHERE Part_Number=?", (part,)):
+            Id, PartNum, SubCat, Desc, Stock, Price, Percent, Totdollars = row
+            print("\nHere ya go..")
+            print("Item Id: %s\nPart Number: %s\nSub Category: %s\nDescription: %s\nTotal in Stock: %s\nList Price: %s\nPercent of cost: %s\nTotal Value of Stock: %s") % (row)
+        columns = ('Id', 'Part Number', 'Category', 'Description', 'Stock', 'Price', 'Percent', 'Value')
+        print("\nWhat are changing about this item?")
+        print("Choose a number")
+        for x in columns:
+            print columns.index(x), x
+        col = int(raw_input("> "))
+        new = "'"+raw_input("What is the new value?:  ")+"'"
+        stack = columns[col]
 
-#### this may be bad need to make more secure
-    cmd = "UPDATE Inventory SET %s=%s WHERE Part_Number=%s" % (stack,new,part)
-    c.execute(cmd)
-    conn.commit()
-    c.execute("SELECT * FROM Inventory WHERE Part_Number=?", (part,))
+    #### this may be bad need to make more secure
+        cmd = "UPDATE Inventory SET %s=%s WHERE Part_Number=%s" % (stack,new,part)
+        c.execute(cmd)
+        conn.commit()
+        c.execute("SELECT * FROM Inventory WHERE Part_Number=?", (part,))
 
 def create_database():
-    print "Creating database..."
-    conn = sqlite3.connect("inventory.db")
-    print "Database created."
-    print "Creating table..."
-
-    c = conn.cursor()
-
-    c.execute("DROP TABLE IF EXISTS Inventory")
-    c.execute("CREATE TABLE Inventory(ID INTEGER PRIMARY KEY, Part_Number TEXT, Category TEXT, Description TEXT, Stock INTEGER, Price REAL, Percent INTEGER, Value REAL)")
-    print "Done."
-    print "Populating..."
-    things = csv.reader(open('inserttestinventory.csv'))
-    c.executemany("INSERT INTO Inventory (Part_Number, Category, Description, Stock, Price, Percent, Value) VALUES(?, ?, ?, ?, ?, ?, ?)", things)
-    conn.commit()
-    print "Finished. Closing connection"
-    conn.close()
+    try:
+        print "Creating database..."
+        conn = sqlite3.connect("inventory.db")
+        print "Database created."
+        print "Creating table..."
+        c = conn.cursor()
+        c.execute("DROP TABLE IF EXISTS Inventory")
+        c.execute("CREATE TABLE Inventory(ID INTEGER PRIMARY KEY, Part_Number TEXT, Category TEXT, Description TEXT, Stock INTEGER, Price REAL, Percent INTEGER, Value REAL)")
+        print "Done."
+        print "Populating..."
+## the inport happens here:
+        things = csv.reader(open('inserttestinventory.csv'))
+        c.executemany("INSERT INTO Inventory (Part_Number, Category, Description, Stock, Price, Percent, Value) VALUES(?, ?, ?, ?, ?, ?, ?)", things)
+        conn.commit()
+        print "Finished. Closing connection"
+    except sqlite3.Error, e:
+        if conn:
+            conn.rollback()
+        print "Error %s:" % e.args[0]
+        sys.exit(1)
+    finally:
+        if conn:
+            conn.close()
 
 def add_remove_item():
-    add_or_remove = str(raw_input("Are we going to add or remove something?   "))
-    if "add" in add_or_remove:
-        print "Gonna need some info from you."
-        partnum = str(raw_input("What is the part number?    "))
-        cat = str(raw_input("What category are we putting it in?    "))
-        desc = str(raw_input("Tell me about it. Common names, uses, and measurements    "))
-        stk = int(raw_input("How many of them do you have?    "))
-        lprice = float(raw_input("What is the list price per unit?    "))
-        ofcost = int(raw_input("What percent of cost do we pay?    "))
-        val = float(raw_input("I really should calculate this for you, I just don't know how yet. So for now just gimme something.   "))
+    with conn:
+        c = conn.cursor()
+        add_or_remove = str(raw_input("Are we going to add or remove something?   "))
+        if "add" in add_or_remove:
+            print "Gonna need some info from you."
+            partnum = str(raw_input("What is the part number?    "))
+            cat = str(raw_input("What category are we putting it in?    "))
+            desc = str(raw_input("Tell me about it. Common names, uses, and measurements    "))
+            stk = int(raw_input("How many of them do you have?    "))
+            lprice = float(raw_input("What is the list price per unit?    "))
+            ofcost = int(raw_input("What percent of cost do we pay?    "))
+            val = float(raw_input("I really should calculate this for you, I just don't know how yet. So for now just gimme something.   "))
 
-        new_item = (partnum, cat, desc, stk, lprice, ofcost, val)
-        c.execute("INSERT INTO Inventory (Part_Number, Category, Description, Stock, Price, Percent, Value) VALUES(?, ?, ?, ?, ?, ?, ?)", new_item)
-        conn.commit()
-        lid = c.lastrowid
-        print "The last Id of the inserted row is %d" % lid
-    elif "re" in add_or_remove:
-        partnum = str(raw_input("What is the part number?    "))
-        c.execute("SELECT * FROM Inventory WHERE Part_Number=?", (partnum,))
-        results = c.fetchone()
-        print("\nHere's what I found:")
-        Id, PartNum, SubCat, Desc, Stock, Price, Percent, Totdollars = results
-        print("\nItem Id: %s \nPart Number: %s \nDescription: %s \nand you have %s in stock at %s each\nTotal value of %s") % (Id, PartNum, Desc, Stock, Price, Totdollars)
-        print "This the right one?"
-        pick = raw_input(" ")
-        if "y" in pick:
-            c.execute("DELETE FROM Inventory WHERE Part_Number =?", (partnum,))
+            new_item = (partnum, cat, desc, stk, lprice, ofcost, val)
+            c.execute("INSERT INTO Inventory (Part_Number, Category, Description, Stock, Price, Percent, Value) VALUES(?, ?, ?, ?, ?, ?, ?)", new_item)
             conn.commit()
-        else:
-            print "Dunno how we got here.."
+            lid = c.lastrowid
+            print "The last Id of the inserted row is %d" % lid
+        elif "re" in add_or_remove:
+            partnum = str(raw_input("What is the part number?    "))
+            c.execute("SELECT * FROM Inventory WHERE Part_Number=?", (partnum,))
+            results = c.fetchone()
+            print("\nHere's what I found:")
+            Id, PartNum, SubCat, Desc, Stock, Price, Percent, Totdollars = results
+            print("\nItem Id: %s \nPart Number: %s \nDescription: %s \nand you have %s in stock at %s each\nTotal value of %s") % (Id, PartNum, Desc, Stock, Price, Totdollars)
+            print "This the right one?"
+            pick = raw_input(" ")
+            if "y" in pick:
+                c.execute("DELETE FROM Inventory WHERE Part_Number =?", (partnum,))
+                conn.commit()
+            else:
+                print "Dunno how we got here.."
 
 def xport_csv():
     with open('fromLIST.csv', 'wb') as f:
@@ -124,7 +142,6 @@ def xport_csv():
 #create_database()
 print("Loading Database...")
 conn = sqlite3.connect("inventory.db")
-c = conn.cursor()
 print("Database opened successfully.")
 
 
@@ -164,9 +181,6 @@ while True:
             verify to use new database""")
 
     if choice == 6:
-        conn = sqlite3.connect("second.db")
-        cur = conn.cursor()
         conn.close
         print("Database disconnected.")
-        print("Completed")
         quit()
