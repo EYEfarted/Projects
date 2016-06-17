@@ -18,7 +18,7 @@ def choose_option():
     print("=====================================================================")
     print("Welcome to the L.I.S.T")
     print("Choose an option to proceede")
-    options = ("Query", "Update Existing", "Add/Remove Column", "Add/Remove Item", "Reports", "Count", "Quit")
+    options = ("Query", "Update Existing", "Add/Remove Column", "Add/Remove Item", "Reports", "Count", "Import", "Quit")
     for thing in options:
         print options.index(thing), thing
     choice = int(raw_input("> "))
@@ -72,22 +72,18 @@ def update_existing():
         conn.commit()
         c.execute("SELECT * FROM Inventory WHERE Part_Number=?", (part,))
 
-def create_database():
+def create_table(csvfile):
     try:
-        print "Creating database..."
-        conn = sqlite3.connect("inventory.db")
-        print "Database created."
         print "Creating table..."
         c = conn.cursor()
         c.execute("DROP TABLE IF EXISTS Inventory")
         c.execute("CREATE TABLE Inventory(ID INTEGER PRIMARY KEY, Part_Number TEXT, Category TEXT, Description TEXT, Stock INTEGER, Price REAL, Percent INTEGER, Value REAL)")
         print "Done."
-        print "Populating..."
+        print "Importing data now..."
 ## the inport happens here:
-        things = csv.reader(open('inserttestinventory.csv'))
+        things = csv.reader(open(csvfile))
         c.executemany("INSERT INTO Inventory (Part_Number, Category, Description, Stock, Price, Percent, Value) VALUES(?, ?, ?, ?, ?, ?, ?)", things)
         conn.commit()
-        print "Finished. Closing connection"
     except sqlite3.Error, e:
         if conn:
             conn.rollback()
@@ -95,7 +91,7 @@ def create_database():
         sys.exit(1)
     finally:
         if conn:
-            conn.close()
+            print "Data imported."
 
 def add_remove_item():
     with conn:
@@ -139,7 +135,7 @@ def xport_csv():
             writer.writerow(row)
 
 
-#create_database()
+
 print("Loading Database...")
 conn = sqlite3.connect("inventory.db")
 print("Database opened successfully.")
@@ -181,6 +177,9 @@ while True:
             verify to use new database""")
 
     if choice == 6:
+        create_table("intoinventory.csv")
+
+    if choice == 7:
         conn.close
         print("Database disconnected.")
         quit()
