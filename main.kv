@@ -1,0 +1,116 @@
+#:import FadeTransition kivy.uix.screenmanager.FadeTransition
+
+<RootScreen>:
+    transition: FadeTransition()
+    StartScreen:
+    SelectScreen:
+    SearchScreen:
+    UploadScreen:
+    ScanScreen:
+    ReportsScreen:
+
+<StartScreen>:
+    name: "start"
+    canvas:
+        Rectangle:
+            pos: 0, 0
+            size: self.size
+            source: "logo.png"
+    FloatLayout:
+        Button:
+            text: "Welcome"
+            size_hint: 0.4, 0.3
+            pos_hint: {'center_x':.5, 'center_y':.1}
+            font_size: 70
+            on_release: root.manager.current = "select"
+
+
+<SelectScreen>:
+    name: "select"
+    GridLayout:
+        cols: 2
+        padding: 10, 10, 10, 10
+        spacing: 10, 10
+        Button:
+            text: "Search"
+            font_size: 20
+            on_release: root.manager.current  = "search"
+        Button:
+            text: "Upload"
+            font_size: 20
+            on_release: root.manager.current  = "upload"
+        Button:
+            text: "Scan"
+            font_size: 20
+            on_release: root.manager.current  = "scan"
+        Button:
+            text: "Reports"
+            font_size: 20
+            on_release: root.manager.current  = "reports"
+
+
+
+<SearchScreen>:
+    name: "search"
+    canvas:
+    FloatLayout:
+        Label:
+            pos_hint: {'center_x':.5, 'center_y':1}
+            text_size: (self.width*.5), self.height
+            text: "This is the search screen. We need text input boxes to supply the search parameters and and a 'go' button.  Then link go to running program and doing search function there."
+
+        Button:
+            text: "Go Back"
+            size_hint: 0.4, 0.3
+            pos_hint: {'center_x':.5, 'center_y':.1}
+            font_size: 70
+            on_release: root.manager.current = "select"
+
+<UploadScreen>:
+    name: "upload"
+    canvas:
+    FloatLayout:
+        Label:
+            pos_hint: {'center_x':.5, 'center_y':1}
+            text_size: (self.width*.5), self.height
+            text: "This will be the upload screen where you grab the most current database from somewhere and start the actual program with that db."
+
+    FloatLayout:
+        Button:
+            text: "Go Back"
+            size_hint: 0.4, 0.3
+            pos_hint: {'center_x':.5, 'center_y':.1}
+            font_size: 70
+            on_release: root.manager.current = "select"
+
+<ScanScreen>:
+    name: "scan"
+    canvas:
+    FloatLayout:
+        Label:
+            pos_hint: {'center_x':.5, 'center_y':1}
+            text_size: (self.width*.5), self.height
+            text: "This will open up the camera utility and will scan barcodes to count or to find in inventory.  If not found ask to add, then pull info and populate an item page."
+    FloatLayout:
+        Button:
+            text: "Go Back"
+            size_hint: 0.4, 0.3
+            pos_hint: {'center_x':.5, 'center_y':.1}
+            font_size: 70
+            on_release: root.manager.current = "select"
+
+<ReportsScreen>:
+    name: "reports"
+    canvas:
+    FloatLayout:
+        Label:
+            pos_hint: {'center_x':.5, 'center_y':1}
+            text_size: (self.width*.5), self.height
+            text: "Will print out pull sheets, cycle counts, total inventory, and maybe the spec sheets."
+    FloatLayout:
+        Button:
+            text: "Go Back"
+            size_hint: 0.4, 0.3
+            pos_hint: {'center_x':.5, 'center_y':.1}
+            font_size: 70
+            on_release: root.manager.current = "select"
