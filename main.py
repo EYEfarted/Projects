@@ -57,7 +57,7 @@ class SearchForm(BoxLayout):
             for res in results:
 
                 Id, PartNum, SubCat, Desc, Stock, Price, Percent, Totdollars = res
-                parts = [("Part Number: %s Description: %s and you have %s in stock at %s each.") % (PartNum, Desc, Stock, Price)]
+                parts = [("%s Part Number: %s Description: %s and you have %s in stock at %s each.") % (Id, PartNum, Desc, Stock, Price)]
 
                 self.search_results.adapter.data.extend(parts)
                 self.search_results._trigger_reset_populate()
@@ -69,6 +69,7 @@ class PartDetails(object):
     stock = None
     price = None
     percent = None
+    pid = None
 
 class Details(BoxLayout):
     pass
@@ -76,47 +77,27 @@ class Details(BoxLayout):
 class LocationButton(ListItemButton, Button):
     def what_am_i(self):
         x = self.text
-        x = x[13:]
-        y = x.find("D")
-        z = x[:y-1]
+        y = x.find(" ")
+        z = x[:y]
         with conn:
             l = ''
-            dts = {'Id': '','PartNum': '','SubCat': '','Desc': '','Stock': '','Price': '','Percent': '','Totdollars': ''}
             c = conn.cursor()
-            c.execute("SELECT * FROM Inventory WHERE Part_Number=?", (z,))
+            c.execute("SELECT * FROM Inventory WHERE ID=?", (z,))
             part = c.fetchone()
-            dts['Id'] = (part[0])
-            dts['PartNum'] = (part[1])
-            dts['SubCat'] = (part[2])
-            dts['Desc'] = (part[3])
-            dts['Stock'] = (part[4])
-            dts['Price'] = (part[5])
-            dts['Percent'] = (part[6])
-            dts['Totdollars'] = (part[7])
 
+            self.parent.parent.parent.parent.parent.parent.info.pid = (part[0])
+            self.parent.parent.parent.parent.parent.parent.info.part_number = (part[1])
+            self.parent.parent.parent.parent.parent.parent.info.subcategory = (part[2])
+            self.parent.parent.parent.parent.parent.parent.info.description = (part[3])
+            self.parent.parent.parent.parent.parent.parent.info.stock = (part[4])
+            self.parent.parent.parent.parent.parent.parent.info.price = (part[5])
+            self.parent.parent.parent.parent.parent.parent.info.percent = (part[6])
+            self.parent.parent.parent.parent.parent.parent.info.pid = (part[7])
 
-            Id = dts['Id']
-            PartNum = dts['PartNum']
-            SubCat = dts['SubCat']
-            Desc = dts['Desc']
-            Stock = dts['Stock']
-            Price = dts['Price']
-            Percent = dts['Percent']
-
-
-            self.parent.parent.parent.parent.parent.parent.info.part_number = PartNum
-            self.parent.parent.parent.parent.parent.parent.info.subcategory = SubCat
-            self.parent.parent.parent.parent.parent.parent.info.description = Desc
-            self.parent.parent.parent.parent.parent.parent.info.stock = Stock
-            self.parent.parent.parent.parent.parent.parent.info.price = Price
-            self.parent.parent.parent.parent.parent.parent.info.percent = Percent
-
-            # print("Id = ",Id,"\nPartNum = ",PartNum,"\nSubCat = ",SubCat,"\nDesc = ",Desc,"\nStock = ",Stock,"\nPrice = ",Price,"\nPercent = ",Percent)
 
 class LoginScreen(Screen):
     def creds(self):
         if self.ids['uname'].text == '' and self.ids['pword'].text == '':
-            print('We caught it')
             self.parent.current = 'select'
 
 class BarcodeScreen(Screen):
@@ -145,47 +126,37 @@ class SearchScreen(Screen):
         self.add_widget(SearchForm())
 
 class MyPopup(Popup):
-
-    def update_existing(self, part, col):
-
-        self.col = col
+    def update_existing(self, part, col, pid):
         with conn:
-
             c = conn.cursor()
+            self.col = col
+            self.pid = pid
             self.part = part
-            for row in c.execute("SELECT * FROM Inventory WHERE Part_Number=?", (part,)):
-                Id, PartNum, SubCat, Desc, Stock, Price, Percent, Totdollars = row
-                print("\nHere ya go..")
-                print(("Item Id: %s\nPart Number: %s\nSub Category: %s\nDescription: %s\nTotal in Stock: %s\nList Price: %s\nPercent of cost: %s\nTotal Value of Stock: %s") % (row))
-                print(self.new.text)
-
-
-                new = "'"+self.new.text+"'"
-
-
-                    #### this may be bad need to make more secure
-                cmd = "UPDATE Inventory SET %s=%s WHERE Part_Number=%s" % (self.col,new,self.part)
-                c.execute(cmd)
-                conn.commit()
-
-
-
-                # c.execute("UPDATE Inventory SET Stock=? WHERE Part_Number=?", (self.new.text,self.part,))
-                # conn.commit()
-                for item in c.execute("SELECT * FROM Inventory WHERE Part_Number=?", (self.part,)):
-                    Id, PartNum, SubCat, Desc, Stock, Price, Percent, Totdollars = item
-                    print("\nNew Values are:")
-                    print(("Item Id: %s\nPart Number: %s\nSub Category: %s\nDescription: %s\nTotal in Stock: %s\nList Price: %s\nPercent of cost: %s\nTotal Value of Stock: %s") % (item))
+            part = str(self.part).replace("'","")
+            col = str(self.col).replace("'","")
+            pid = str(self.pid).replace("'","")
+            new = str(self.new.text).replace("'","")
+            # for row in c.execute("SELECT * FROM Inventory WHERE ID = ?", (pid,)):
+            #     Id, PartNum, SubCat, Desc, Stock, Price, Percent, Totdollars = row
+            #     print("\nItem before changes..")
+            #     print(("Item Id: %s\nPart Number: %s\nSub Category: %s\nDescription: %s\nTotal in Stock: %s\nList Price: %s\nPercent of cost: %s\nTotal Value of Stock: %s") % (row))
+            #
+            #         #### this may be bad need to make more secure
+            c.execute("UPDATE Inventory SET "+col+"= ? WHERE ID = ?", (new, pid))
+            conn.commit()
+            #
+            # for item in c.execute("SELECT * FROM Inventory WHERE ID = ?", (pid,)):
+            #     Id, PartNum, SubCat, Desc, Stock, Price, Percent, Totdollars = item
+            #     print("\nThese are the new values")
+            #     print(("Item Id: %s\nPart Number: %s\nSub Category: %s\nDescription: %s\nTotal in Stock: %s\nList Price: %s\nPercent of cost: %s\nTotal Value of Stock: %s") % (item))
+            #
 
 
 class ResultsScreen(Screen):
 
     def show_results(self):
-        self.clear_widgets()
-        # self.name = str(self.parent.info.part_number)
-        # need to add a go back here
+        self.clear_widgets()        # need to add a go back here
         self.add_widget(DetailPartView())
-
 
     def change_quantity(self):
         popup = MyPopup(title='What is the new quantity?', size_hint=(0.7, 0.3))
@@ -196,23 +167,19 @@ class ResultsScreen(Screen):
         popup = MyPopup(title= 'What is the new price?', size_hint=(0.7, 0.3))
         popup.col = 'Price'
         popup.open()
+
     def change_description(self):
         popup = MyPopup(title= 'What is the new description?', size_hint=(0.7, 0.3))
         popup.col = 'Description'
         popup.open()
+
     def change_part_number(self):
         popup = MyPopup(title= 'What is the new Part Number?', size_hint=(0.7, 0.3))
         popup.col = 'Part_Number'
         popup.open()
+
     def change_picture(self):
         print("no camera yet")
-
-        # with conn:
-        #     c = conn.cursor()
-        #     part = self.parent.info.part_number
-        #     print(c.execute("SELECT * FROM Inventory WHERE Part_Number=?", (part,)))
-        #     self.add_widget(Label(halign=left, text="What is the new price?"))
-        #     self.add_widget(TextInput(halign=right, id=new_price))
 
 class MyScreenManager(ScreenManager):
     screen_one = ObjectProperty(None)
@@ -227,6 +194,7 @@ class MainApp(App):
     def build(self):
         x = MyScreenManager()
         return x
+
 
 conn = sqlite3.connect('inventory.db')
 

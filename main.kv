@@ -45,7 +45,7 @@
             font_size: 30
         Image:
             size_hint_y: .7
-            source: 'images/logo.png'
+            source: 'logo.png'
             allow_stretch: True
             keep_ratio: True
         BoxLayout:
@@ -125,24 +125,28 @@ SearchForm:
     orientation: 'vertical'
     search_input: search_box
     search_results: search_results_list
+    TextInput:
+        id: search_box
+        height: '150dp'
+        size_hint_y: None
+        focus: True
+        multiline: False
+        font_size: 30
+        on_text_validate: root.search_location()
     BoxLayout:
         orientation: 'horizontal'
-        height: '40dp'
+        height: '70dp'
         size_hint_y: None
-        TextInput:
-            id: search_box
-            size_hint_x: 50
-            focus: True
-            multiline: False
-            on_text_validate: root.search_location()
         Button:
             text: 'Search'
-            size_hint_x: 25
+            font_size: 17
+            size_hint_x: 50
             on_press: root.search_location()
 
         Button:
-            text: 'Go Back'
-            size_hint_x: 25
+            text: 'Menu'
+            font_size: 17
+            size_hint_x: 50
             on_press: app.root.current = 'select'
 
     ListView:
@@ -161,23 +165,40 @@ SearchForm:
         id: new_text
         focus: True
         multiline: False
-        on_text_validate: root.update_existing(str(app.root.info.part_number),self.parent.parent.parent.col), self.parent.parent.parent.dismiss()
+        on_text_validate: root.update_existing(str(app.root.info.part_number),self.parent.parent.parent.col, str(app.root.info.pid)), self.parent.parent.parent.dismiss()
 
 <Details>:
     orientation: 'vertical'
     Label:
         text: 'Part Number: '+ str(app.root.info.part_number)
+        halign: 'center'
+        text_size: root.width, None
+        size: self.texture_size
     Label:
         text: 'Category: '+ str(app.root.info.subcategory)
+        halign: 'center'
+        text_size: root.width, None
+        size: self.texture_size
     Label:
         text: 'Description: '+ str(app.root.info.description)
+        halign: 'center'
+        text_size: root.width, None
+        size: self.texture_size
     Label:
         text: 'In Stock: '+ str(app.root.info.stock)
+        halign: 'center'
+        text_size: root.width, None
+        size: self.texture_size
     Label:
         text: 'Cost: '+'$'+str(app.root.info.price)
+        halign: 'center'
+        text_size: root.width, None
+        size: self.texture_size
     Label:
         text: 'Total: '+'$'+ str(round(float(app.root.info.price)*float(app.root.info.stock), 2))
-
+        halign: 'center'
+        text_size: root.width, None
+        size: self.texture_size
 
 <DetailPartView>:
     orientation: 'vertical'
@@ -185,29 +206,39 @@ SearchForm:
         Details:
 
         Image:
-            source: 'images/parts.jpg'
+            source: str(app.root.info.part_number)+'.jpg'
             allow_stretch: True
     BoxLayout:
+        padding: 30,30,30,30
+        spacing: 15
         BoxLayout:
+            spacing: 20
             orientation: 'vertical'
             Button:
-                text: 'update quantity'
+                text: 'Update Quantity'
+                font_size: 20
                 on_press: self.parent.parent.parent.parent.change_quantity()
             Button:
                 text: 'add picture'
+                font_size: 20
                 on_press: self.parent.parent.parent.parent.change_picture()
             Button:
-                text: 'Go Back'
+                text: 'Back to Search Screen'
+                font_size: 20
                 on_press: app.root.current = 'search'
 
         BoxLayout:
+            spacing: 20
             orientation: 'vertical'
             Button:
-                text: 'adjust price'
+                text: 'Adjust Price'
+                font_size: 20
                 on_press: self.parent.parent.parent.parent.change_price()
             Button:
-                text: 'change description'
+                text: 'Change Description'
+                font_size: 20
                 on_press: self.parent.parent.parent.parent.change_description()
             Button:
                 text: 'Change Part Number'
+                font_size: 20
                 on_press: self.parent.parent.parent.parent.change_part_number()
