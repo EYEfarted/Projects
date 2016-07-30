@@ -1,0 +1,213 @@
+#:import main main
+#:import ListAdapter kivy.adapters.listadapter.ListAdapter
+<MyScreenManager>:
+    id: screen_manager
+    screen_one: LoginScreen
+    screen_two: SelectScreen
+    screen_three: SearchScreen
+    screen_three: ResultsScreen
+    screen_four: BarcodeScreen
+
+
+    LoginScreen:
+        id: LoginScreen
+        manager: screen_manager
+        name: 'login'
+
+    SelectScreen:
+        id: SelectScreen
+        manager: screen_manager
+        name: 'select'
+
+    SearchScreen:
+        id: SearchScreen
+        manager: screen_manager
+        name: 'search'
+
+    ResultsScreen:
+        id: ResultsScreen
+        manager: screen_manager
+        name: 'results'
+
+    BarcodeScreen:
+        id: BarcodeScreen
+        manager: screen_manager
+        name: 'barcode'
+
+
+
+<LoginScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            size_hint_y: .3
+            text: 'Welcome to the L.I.S.T.'
+            font_size: 30
+        Image:
+            size_hint_y: .7
+            source: 'images/logo.png'
+            allow_stretch: True
+            keep_ratio: True
+        BoxLayout:
+            orientation: 'vertical'
+            GridLayout:
+                size_hint_y: 3.5
+                cols: 2
+                padding: 5,5,5,5
+                spacing: 5,5
+                Label:
+                    text: 'Username'
+                    text_size: self.size
+                    halign: 'center'
+                    valign: 'middle'
+                    size_hint: .5, 1
+                TextInput:
+                    id: uname
+                    text_hint: 'Username'
+                    multiline: False
+                    size_hint: 3, 1
+                Label:
+                    text: 'Password'
+                    text_size: self.size
+                    halign: 'center'
+                    valign: 'middle'
+                    size: self.width, self.height
+                TextInput:
+                    id: pword
+                    multiline: False
+                    password: True
+            Button:
+                text: 'Login'
+                size: self.parent.width, 20
+                font_size: 30
+                on_release: root.creds()
+
+<SelectScreen>:
+    GridLayout:
+        cols: 2
+        padding: 25, 25, 25, 25
+        spacing: 25, 25
+        Button:
+            text: 'Search'
+            font_size: 20
+            on_release: app.root.current  = 'search'
+        Button:
+            text: 'Upload'
+            font_size: 20
+            on_release: print("test") # app.root.current  = 'upload'
+        Button:
+            text: 'Scan'
+            font_size: 20
+            on_release: print("test") # app.root.current  = 'scan'
+        Button:
+            text: 'Reports'
+            font_size: 20
+            on_release: print("test") # app.root.current  = 'reports'
+        Button:
+            text: 'Quit'
+            font_size: 20
+            on_release: app.get_running_app().stop()
+
+<SearchScreen>:
+    on_enter: self.search_word()
+
+<ResultsScreen>:
+    on_enter: self.show_results()
+
+<BarcodeScreen>:
+    on_enter: self.generate_barcode()
+    Label:
+        text: "Not Yet"
+        font_size: 50
+
+SearchForm:
+<SearchForm>:
+    orientation: 'vertical'
+    search_input: search_box
+    search_results: search_results_list
+    BoxLayout:
+        orientation: 'horizontal'
+        height: '40dp'
+        size_hint_y: None
+        TextInput:
+            id: search_box
+            size_hint_x: 50
+            focus: True
+            multiline: False
+            on_text_validate: root.search_location()
+        Button:
+            text: 'Search'
+            size_hint_x: 25
+            on_press: root.search_location()
+
+        Button:
+            text: 'Go Back'
+            size_hint_x: 25
+            on_press: app.root.current = 'select'
+
+    ListView:
+        id: search_results_list
+        adapter:
+            ListAdapter(data=[], cls=main.LocationButton)
+
+<LocationButton>:
+    size_hint_x: 100
+    on_press: self.what_am_i()
+    on_release: app.root.current = 'results'
+
+<MyPopup>:
+    new: new_text
+    TextInput:
+        id: new_text
+        focus: True
+        multiline: False
+        on_text_validate: root.update_existing(str(app.root.info.part_number),self.parent.parent.parent.col), self.parent.parent.parent.dismiss()
+
+<Details>:
+    orientation: 'vertical'
+    Label:
+        text: 'Part Number: '+ str(app.root.info.part_number)
+    Label:
+        text: 'Category: '+ str(app.root.info.subcategory)
+    Label:
+        text: 'Description: '+ str(app.root.info.description)
+    Label:
+        text: 'In Stock: '+ str(app.root.info.stock)
+    Label:
+        text: 'Cost: '+'$'+str(app.root.info.price)
+    Label:
+        text: 'Total: '+'$'+ str(round(float(app.root.info.price)*float(app.root.info.stock), 2))
+
+
+<DetailPartView>:
+    orientation: 'vertical'
+    BoxLayout:
+        Details:
+
+        Image:
+            source: 'images/parts.jpg'
+            allow_stretch: True
+    BoxLayout:
+        BoxLayout:
+            orientation: 'vertical'
+            Button:
+                text: 'update quantity'
+                on_press: self.parent.parent.parent.parent.change_quantity()
+            Button:
+                text: 'add picture'
+                on_press: self.parent.parent.parent.parent.change_picture()
+            Button:
+                text: 'Go Back'
+                on_press: app.root.current = 'search'
+
+        BoxLayout:
+            orientation: 'vertical'
+            Button:
+                text: 'adjust price'
+                on_press: self.parent.parent.parent.parent.change_price()
+            Button:
+                text: 'change description'
+                on_press: self.parent.parent.parent.parent.change_description()
+            Button:
+                text: 'Change Part Number'
+                on_press: self.parent.parent.parent.parent.change_part_number()
