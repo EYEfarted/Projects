@@ -1,12 +1,14 @@
 #:import main main
+
 #:import ListAdapter kivy.adapters.listadapter.ListAdapter
 <MyScreenManager>:
     id: screen_manager
     screen_one: LoginScreen
     screen_two: SelectScreen
     screen_three: SearchScreen
-    screen_three: ResultsScreen
-    screen_four: BarcodeScreen
+    screen_four: ResultsScreen
+    screen_five: BarcodeScreen
+    screen_six: BarcodeScreen
 
 
     LoginScreen:
@@ -33,6 +35,11 @@
         id: BarcodeScreen
         manager: screen_manager
         name: 'barcode'
+
+    UploadScreen:
+        id: UploadScreen
+        manager: screen_manager
+        name: 'upload'
 
 
 
@@ -108,6 +115,9 @@
             font_size: 20
             on_release: app.get_running_app().stop()
 
+<UploadScreen>:
+    on_enter: self.updatestuff()
+
 <SearchScreen>:
     on_enter: self.search_word()
 
@@ -119,6 +129,14 @@
     Label:
         text: "Not Yet"
         font_size: 50
+<MyBackButton>:
+    text: 'Go Back'
+    on_press: app.root.current = 'search'
+
+<MyRefreshButton>:
+    text: 'Refresh Page'
+    on_press: app.root.what_am_i()
+    on_release: self.parent.parent.parent.show_results()
 
 SearchForm:
 <SearchForm>:
@@ -132,7 +150,7 @@ SearchForm:
         focus: True
         multiline: False
         font_size: 30
-        on_text_validate: root.search_location()
+        on_text_validate: root.search_location(self.text)
     BoxLayout:
         orientation: 'horizontal'
         height: '70dp'
@@ -141,8 +159,7 @@ SearchForm:
             text: 'Search'
             font_size: 17
             size_hint_x: 50
-            on_press: root.search_location()
-
+            on_press: self.parent.parent.search_location(self.parent.parent.ids['search_box'].text)
         Button:
             text: 'Menu'
             font_size: 17
@@ -159,86 +176,127 @@ SearchForm:
     on_press: self.what_am_i()
     on_release: app.root.current = 'results'
 
-<MyPopup>:
-    new: new_text
-    TextInput:
-        id: new_text
-        focus: True
-        multiline: False
-        on_text_validate: root.update_existing(str(app.root.info.part_number),self.parent.parent.parent.col, str(app.root.info.pid)), self.parent.parent.parent.dismiss()
-
 <Details>:
     orientation: 'vertical'
     Label:
-        text: 'Part Number: '+ str(app.root.info.part_number)
-        halign: 'center'
+        text: 'Part Number:'
+        halign: 'left'
+        padding_x: 6
+        text_size: self.width, None
+        size: self.texture_size
+        color: 1,0,0,1
+
+    Label:
+        text: 'Category:'
+        padding_x: 6
+        halign: 'left'
         text_size: root.width, None
         size: self.texture_size
     Label:
-        text: 'Category: '+ str(app.root.info.subcategory)
-        halign: 'center'
+        text: 'Description:'
+        padding_x: 6
+        halign: 'left'
         text_size: root.width, None
         size: self.texture_size
     Label:
-        text: 'Description: '+ str(app.root.info.description)
-        halign: 'center'
+        text: 'In Stock:'
+        padding_x: 6
+        halign: 'left'
         text_size: root.width, None
         size: self.texture_size
     Label:
-        text: 'In Stock: '+ str(app.root.info.stock)
-        halign: 'center'
+        text: 'Cost:         '+'$'
+        padding_x: 6
+        halign: 'left'
         text_size: root.width, None
         size: self.texture_size
     Label:
-        text: 'Cost: '+'$'+str(app.root.info.price)
-        halign: 'center'
-        text_size: root.width, None
-        size: self.texture_size
-    Label:
-        text: 'Total: '+'$'+ str(round(float(app.root.info.price)*float(app.root.info.stock), 2))
-        halign: 'center'
+        text: 'Total:         '+'$'
+        padding_x: 6
+        halign: 'left'
         text_size: root.width, None
         size: self.texture_size
 
-<DetailPartView>:
-    orientation: 'vertical'
-    BoxLayout:
-        Details:
+<TotalLabel>:
+    text: str(round(float(app.root.info.price)*float(app.root.info.stock), 2))
+    halign: 'left'
+    text_size: root.width, None
+    size: self.texture_size
 
-        Image:
-            source: str(app.root.info.part_number)+'.jpg'
-            allow_stretch: True
-    BoxLayout:
-        padding: 30,30,30,30
-        spacing: 15
-        BoxLayout:
-            spacing: 20
-            orientation: 'vertical'
-            Button:
-                text: 'Update Quantity'
-                font_size: 20
-                on_press: self.parent.parent.parent.parent.change_quantity()
-            Button:
-                text: 'add picture'
-                font_size: 20
-                on_press: self.parent.parent.parent.parent.change_picture()
-            Button:
-                text: 'Back to Search Screen'
-                font_size: 20
-                on_press: app.root.current = 'search'
+<CategoryLabel>:
+    text: str(app.root.info.category)
+    halign: 'left'
+    text_size: root.width, None
+    size: self.texture_size
 
-        BoxLayout:
-            spacing: 20
-            orientation: 'vertical'
-            Button:
-                text: 'Adjust Price'
-                font_size: 20
-                on_press: self.parent.parent.parent.parent.change_price()
-            Button:
-                text: 'Change Description'
-                font_size: 20
-                on_press: self.parent.parent.parent.parent.change_description()
-            Button:
-                text: 'Change Part Number'
-                font_size: 20
-                on_press: self.parent.parent.parent.parent.change_part_number()
+
+<PartLabel>:
+    text: str(app.root.info.part_number)
+    halign: 'left'
+    text_size: root.width, None
+    size: self.texture_size
+
+<PartNumPopup>:
+    size_hint: (None, None)
+    size: (600,300)
+
+
+<PartNumTextInput>:
+    update_text: update_text
+    id: update_text
+    multiline: False
+    text: str(app.root.info.part_number)
+
+<DescLabel>:
+    text: str(app.root.info.description)
+    halign: 'left'
+    text_size: root.width, None
+    size: self.texture_size
+
+<DescPopup>:
+    size_hint: (None, None)
+    size: (600,300)
+
+<DescTextInput>:
+    update_text: update_text
+    id: update_text
+    multiline: False
+    text: str(app.root.info.description)
+
+<StockLabel>:
+    text: str(app.root.info.stock)
+    halign: 'left'
+    text_size: root.width, None
+    size: self.texture_size
+
+<StockPopup>:
+    size_hint: (None, None)
+    size: (600,300)
+    on_dismiss: app.root.what_am_i()
+
+<StockTextInput>:
+    update_text: update_text
+    id: update_text
+    multiline: False
+    text: str(app.root.info.stock)
+
+<PriceLabel>:
+    text: str(app.root.info.price)
+    halign: 'left'
+    text_size: root.width, None
+    size: self.texture_size
+
+<PricePopup>:
+    size_hint: (None, None)
+    size: (600,300)
+    on_dismiss: app.root.what_am_i()
+
+<PriceTextInput>:
+    update_text: update_text
+    id: update_text
+    multiline: False
+    text: str(app.root.info.price)
+
+<MyImage>:
+    source: app.root.info.part_number+'.jpg'
+    allow_stretch: True
