@@ -400,7 +400,7 @@ class CategoryPopup(Popup):
         yes_btn.bind(on_release=self.dismiss)
 
     def some_function(self, obj):
-        self.t.text = MyScreenManager.info.price
+        self.t.text = MyScreenManager.info.category
         print('Pressed the no button')
 
 
