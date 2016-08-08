@@ -68,7 +68,7 @@ class SearchForm(BoxLayout):
 
                 for res in results:
 
-                    Id, PartNum, SubCat, Desc, Stock, Price, New_Used = res
+                    Id, PartNum, Coord, SubCat, Desc, Stock, Price, New_Used = res
                     parts = [("%s Part Number: %s Description: %s and you have %s in stock at %s each.") % (Id, PartNum, Desc, Stock, Price)]
 
                     self.search_results.adapter.data.extend(parts)
@@ -108,7 +108,7 @@ class SearchForm(BoxLayout):
                 self.search_results.adapter.data.extend(x)
             for res in results:
 
-                Id, PartNum, SubCat, Desc, Stock, Price, New_Used = res
+                Id, PartNum, Coord, SubCat, Desc, Stock, Price, New_Used = res
                 parts = [("%s Part Number: %s Description: %s and you have %s in stock at %s each.") % (Id, PartNum, Desc, Stock, Price)]
 
                 self.search_results.adapter.data.extend(parts)
@@ -125,6 +125,7 @@ class PartDetails(EventDispatcher):
     price = StringProperty('')
     new_used = StringProperty('')
     pid = StringProperty('')
+    coordinates = StringProperty('')
 
 class Details(BoxLayout):
     pass
@@ -144,12 +145,14 @@ class LocationButton(ListItemButton, Button):
                 self.parent.parent.parent.parent.parent.parent.info.pid = (str(part[0]))
                 # print(self.parent.parent.parent.parent.parent.parent.info.pid,"this is the location button pid")
                 self.parent.parent.parent.parent.parent.parent.info.part_number = str(part[1])
+                self.parent.parent.parent.parent.parent.parent.info.coordinates = str(part[2])
+
                 # print(self.parent.parent.parent.parent.parent.parent.info.part_number,"this is the location button part_number")
-                self.parent.parent.parent.parent.parent.parent.info.category = str(part[2])
-                self.parent.parent.parent.parent.parent.parent.info.description = str(part[3])
-                self.parent.parent.parent.parent.parent.parent.info.stock = str(part[4])
-                self.parent.parent.parent.parent.parent.parent.info.price = str(part[5])
-                self.parent.parent.parent.parent.parent.parent.info.new_used = str(part[6])
+                self.parent.parent.parent.parent.parent.parent.info.category = str(part[3])
+                self.parent.parent.parent.parent.parent.parent.info.description = str(part[4])
+                self.parent.parent.parent.parent.parent.parent.info.stock = str(part[5])
+                self.parent.parent.parent.parent.parent.parent.info.price = str(part[6])
+                self.parent.parent.parent.parent.parent.parent.info.new_used = str(part[7])
         else:
             with conn:
                 c = conn.cursor()
@@ -161,11 +164,12 @@ class LocationButton(ListItemButton, Button):
 
                 self.parent.parent.parent.parent.parent.parent.info.pid = (str(part[0]))
                 self.parent.parent.parent.parent.parent.parent.info.part_number = str(part[1])
-                self.parent.parent.parent.parent.parent.parent.info.category = str(part[2])
-                self.parent.parent.parent.parent.parent.parent.info.description = str(part[3])
-                self.parent.parent.parent.parent.parent.parent.info.stock = str(part[4])
-                self.parent.parent.parent.parent.parent.parent.info.price = str(part[5])
-                self.parent.parent.parent.parent.parent.parent.info.new_used = str(part[6])
+                self.parent.parent.parent.parent.parent.parent.info.coordinates = str(part[2])
+                self.parent.parent.parent.parent.parent.parent.info.category = str(part[3])
+                self.parent.parent.parent.parent.parent.parent.info.description = str(part[4])
+                self.parent.parent.parent.parent.parent.parent.info.stock = str(part[5])
+                self.parent.parent.parent.parent.parent.parent.info.price = str(part[6])
+                self.parent.parent.parent.parent.parent.parent.info.new_used = str(part[7])
 
 
 
@@ -201,12 +205,15 @@ class UploadScreen(Screen):
             c = conn.cursor()
             c.execute("DROP TABLE IF EXISTS Inventory")
             print("Checked for and dropped table if exists")
-            c.execute("CREATE TABLE Inventory(ID INTEGER PRIMARY KEY, Part_Number INTEGER, Category TEXT, Description TEXT, Stock INTEGER, Price REAL, New_Used TEXT)")
+            c.execute("CREATE TABLE Inventory(ID INTEGER PRIMARY KEY, Part_Number INTEGER, Shelf INTEGER, Category TEXT, Description TEXT, Stock INTEGER, Price REAL, New_Used TEXT)")
             print("Done.")
             print("Importing data now...")
     ## the inport happens here:
             things = csv.reader(open(csvfile))
-            c.executemany("INSERT INTO Inventory (Part_Number, Category, Description, Stock, Price, New_Used) VALUES(?, ?, ?, ?, ?, ?)", things)
+            for line in things:
+                stuff = [(i) for i in line]
+                print(stuff)
+                c.executemany("INSERT INTO Inventory (Part_Number, Shelf, Category, Description, Stock, Price, New_Used) VALUES(?, ?, ?, ?, ?, ?, ?)", (stuff,))
             conn.commit()
         except sqlite3.Error:
             if conn:
@@ -299,8 +306,8 @@ class DescPopup(Popup):
         self.t.bind(on_text_validate=self.t.update_description)
         h = BoxLayout(orientation='horizontal')
         v = BoxLayout(orientation='vertical')
-        n = Button(text='No', size_hint_x=0.25)
-        yes_btn = Button(text='Yes', size_hint_x=0.25)
+        n = Button(text='No', size_hint_x=0.25, background_color=(1,0,0,1))
+        yes_btn = Button(text='Yes', size_hint_x=0.25, background_color=(0,1,0,1))
         l = Label(text='Commit changes to database?', size_hint_x=0.5)
         self.title = "What is the new Description?"
         h.add_widget(l)
@@ -339,8 +346,8 @@ class StockPopup(Popup):
         self.t.bind(on_text_validate=self.t.update_stock)
         h = BoxLayout(orientation='horizontal')
         v = BoxLayout(orientation='vertical')
-        n = Button(text='No', size_hint_x=0.25)
-        yes_btn = Button(text='Yes', size_hint_x=0.25)
+        n = Button(text='No', size_hint_x=0.25, background_color=(1,0,0,1))
+        yes_btn = Button(text='Yes', size_hint_x=0.25, background_color=(0,1,0,1))
         l = Label(text='Commit changes to database?', size_hint_x=0.5)
         self.title = "What is the new Stock count?"
         h.add_widget(l)
@@ -371,27 +378,50 @@ class CategoryTextInput(TextInput):
             c.execute("UPDATE Inventory SET Category= ? WHERE ID = ?", (new, pid))
             conn.commit()
 
+class CatButton(Button):
+    def showme(self, obj):
+        print(self.text)
+        MyScreenManager.info.category = self.text
+        print(MyScreenManager.info.category+"MyScreenManager.info.category")
 
 class CategoryPopup(Popup):
-
+    btn = None
     t = None
     def __init__(self, **kwargs):
         super(CategoryPopup, self).__init__(**kwargs)
-        self.t = CategoryTextInput(on_text_validate=self.dismiss)
+        self.t = CategoryTextInput(on_text_validate=self.dismiss, size_hint_y=0.1)
         self.t.bind(on_text_validate=self.t.update_category)
-        h = BoxLayout(orientation='horizontal')
+        g = GridLayout(cols=4, size_hint_y=0.75)
+        h = BoxLayout(orientation='horizontal', size_hint_y=0.15)
         v = BoxLayout(orientation='vertical')
-        n = Button(text='No', size_hint_x=0.25)
-        yes_btn = Button(text='Yes', size_hint_x=0.25)
+        n = Button(text='No', size_hint_x=0.25, background_color=(1,0,0,1))
+        yes_btn = Button(text='Yes', size_hint_x=0.25, background_color=(0,1,0,1))
         l = Label(text='Commit changes to database?', size_hint_x=0.5)
-        self.title = "What is the new Catefory?"
+        self.title = "What is the new Category?"
         h.add_widget(l)
         h.add_widget(yes_btn)
         h.add_widget(n)
 
         v.add_widget(self.t)
         v.add_widget(h)
+        with conn:
+            c = conn.cursor()
+            c.execute("SELECT DISTINCT Category FROM Inventory")
+            part = c.fetchall()
+            print(part)
+            for i in part:
+                self.btn = CatButton(text='%s' % i)
+                self.btn.bind(on_press=self.btn.showme)
+                g.add_widget(self.btn)
 
+
+    # text_size: root.width, None
+    # size: self.texture_size
+
+
+
+
+        v.add_widget(g)
         self.add_widget(v)
 
         n.bind(on_press=self.some_function)
@@ -402,6 +432,7 @@ class CategoryPopup(Popup):
     def some_function(self, obj):
         self.t.text = MyScreenManager.info.category
         print('Pressed the no button')
+
 
 
 class PriceTextInput(TextInput):
@@ -499,7 +530,7 @@ class DetailPartView(BoxLayout):
         desc_btn = Button(text='Change Description')
         stock_btn = Button(text='Update Quantity')
         price_btn = Button(text='Adjust Price')
-        pic_btn = Button(text='Doesn\'t do anything')
+        pic_btn = Button(text='Show Shelf Location')
         delete_btn = Button(text='Delete this item')
         cat_btn = Button(text='Change Category')
         back_btn = MyBackButton()
@@ -584,7 +615,7 @@ class DetailPartView(BoxLayout):
 
 
     def change_picture(self, obj):
-        print("I said IT DOESN'T DO ANYTHING! If you want it do then make it..")
+        print(MyScreenManager.info.coordinates+" are the coordinates")
 
 
 class SearchScreen(Screen):
@@ -628,11 +659,13 @@ class MyScreenManager(ScreenManager):
 
             self.info.pid = str(part[0])
             self.info.part_number = str(part[1])
-            self.info.category = str(part[2])
-            self.info.description = str(part[3])
-            self.info.stock = str(part[4])
-            self.info.price = str(part[5])
-            self.info.new_used = str(part[6])
+            self.info.coordinates = str(part[2])
+
+            self.info.category = str(part[3])
+            self.info.description = str(part[4])
+            self.info.stock = str(part[5])
+            self.info.price = str(part[6])
+            self.info.new_used = str(part[7])
 
 
 class MainApp(App):
