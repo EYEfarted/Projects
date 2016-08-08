@@ -23,6 +23,7 @@ from kivy.uix.button import Button
 from kivy.uix.image import Image
 from kivy.adapters.models import SelectableDataItem
 from kivy.event import EventDispatcher
+from kivy.graphics import Color
 from openpyxl import load_workbook
 import time
 import random
@@ -37,24 +38,71 @@ import json
 class SearchForm(BoxLayout):
     search_input = ObjectProperty()
     search_results = ObjectProperty()
+    def __init__(self, **kwargs):
+        super(SearchForm, self).__init__(**kwargs)
+        if SearchScreen.search_item == None:
+            print('None')
+        else:
+            with conn:
+                c = conn.cursor()
+                # print(SearchScreen.search_item ," SearchScreen().search_item")
+                self.search_input.text = SearchScreen.search_item
+                mypart = SearchScreen.search_item
+                descriptors = mypart.split()
+                nums = len(descriptors)
+                l = ''
+                k = ''
+                for word in descriptors:
+                    if word != descriptors[nums-1]:
+                        l += "'%"+word + "%' AND Description LIKE "
+                        k += "'%"+word + "%' AND Category LIKE "
+                    else:
+                        l += "'%"+word+"%'"
+                        k += "'%"+word+"%'"
+                if l == '':
+                    c.execute("SELECT * FROM Inventory")
+                else:
+                    c.execute("SELECT * FROM Inventory WHERE Description LIKE "+l+" OR Category LIKE "+k+" OR Part_Number=?", (mypart,))
+                results = c.fetchall()
+                self.search_results.adapter.data.clear()
+                if results == []:
+                    x = [('No Results')]
+                    self.search_results.adapter.data.extend(x)
+                for res in results:
+
+                    Id, PartNum, SubCat, Desc, Stock, Price, Percent, Totdollars = res
+                    parts = [("%s Part Number: %s Description: %s and you have %s in stock at %s each.") % (Id, PartNum, Desc, Stock, Price)]
+
+                    self.search_results.adapter.data.extend(parts)
+                    self.search_results._trigger_reset_populate()
+
+
     def search_location(self, part):
         with conn:
             c = conn.cursor()
-            print(self.search_input.text)
-            self.part = part
-            mypart = self.part
+            # print('self.search_input.text = '+self.search_input.text)
+            SearchScreen.search_item = self.search_input.text
+            if SearchScreen.search_item == None:
+                mypart = part
+            else:
+                mypart = SearchScreen.search_item
+
+
             descriptors = mypart.split()
             nums = len(descriptors)
             l = ''
+            k = ''
             for word in descriptors:
                 if word != descriptors[nums-1]:
                     l += "'%"+word + "%' AND Description LIKE "
+                    k += "'%"+word + "%' AND Category LIKE "
                 else:
                     l += "'%"+word+"%'"
+                    k += "'%"+word+"%'"
             if l == '':
                 c.execute("SELECT * FROM Inventory")
             else:
-                c.execute("SELECT * FROM Inventory WHERE Description LIKE "+l+" OR Part_Number=?", (mypart,))
+                c.execute("SELECT * FROM Inventory WHERE Description LIKE "+l+" OR Category LIKE "+k+" OR Part_Number=?", (mypart,))
             results = c.fetchall()
             self.search_results.adapter.data.clear()
             if results == []:
@@ -67,6 +115,9 @@ class SearchForm(BoxLayout):
 
                 self.search_results.adapter.data.extend(parts)
                 self.search_results._trigger_reset_populate()
+            SearchScreen.search_item = self.search_input.text
+
+
 
 class PartDetails(EventDispatcher):
     part_number = StringProperty('')
@@ -89,12 +140,12 @@ class LocationButton(ListItemButton, Button):
             c = conn.cursor()
             c.execute("SELECT * FROM Inventory WHERE ID=?", (z,))
             part = c.fetchone()
-            print('Heres part[0]', part[0])
+            # print('Heres part[0]', part[0])
 
             self.parent.parent.parent.parent.parent.parent.info.pid = (str(part[0]))
-            print(self.parent.parent.parent.parent.parent.parent.info.pid,"this is the location button pid")
+            # print(self.parent.parent.parent.parent.parent.parent.info.pid,"this is the location button pid")
             self.parent.parent.parent.parent.parent.parent.info.part_number = str(part[1])
-            print(self.parent.parent.parent.parent.parent.parent.info.part_number,"this is the location button part_number")
+            # print(self.parent.parent.parent.parent.parent.parent.info.part_number,"this is the location button part_number")
             self.parent.parent.parent.parent.parent.parent.info.category = str(part[2])
             self.parent.parent.parent.parent.parent.parent.info.description = str(part[3])
             self.parent.parent.parent.parent.parent.parent.info.stock = str(part[4])
@@ -116,8 +167,44 @@ class BarcodeScreen(Screen):
 class SelectScreen(Screen):
     pass
 
+
+
+
+
 class UploadScreen(Screen):
-    pass
+    upload_file = ObjectProperty()
+    def go_back(self):
+        print(self.upload_file.text)
+        self.parent.current = 'select'
+
+
+    def create_table(self):
+        csvfile = self.upload_file.text
+
+        try:
+            print("Creating table...")
+            c = conn.cursor()
+            c.execute("DROP TABLE IF EXISTS Inventory")
+            c.execute("CREATE TABLE Inventory(ID INTEGER PRIMARY KEY, Part_Number TEXT, Category TEXT, Description TEXT, Stock INTEGER, Price REAL, Percent INTEGER, Value REAL)")
+            print("Done.")
+            print("Importing data now...")
+    ## the inport happens here:
+            things = csv.reader(open(csvfile))
+            c.executemany("INSERT INTO Inventory (Part_Number, Category, Description, Stock, Price, Percent, Value) VALUES(?, ?, ?, ?, ?, ?, ?)", things)
+            conn.commit()
+        except sqlite3.Error:
+            if conn:
+                conn.rollback()
+            print("Error %s:" % sqlite3.Error)
+            sys.exit(1)
+        finally:
+            if conn:
+                print("Data imported.")
+
+
+
+
+
 
 class ReportsScreen(Screen):
     pass
@@ -300,7 +387,7 @@ class PricePopup(Popup):
         self.t.text = MyScreenManager.info.price
         print('Pressed the no button')
 
-class MyImage(Image):
+class MyImage(Button):
     pass
 class MyRefreshButton(Button):
     pass
@@ -327,34 +414,34 @@ class DetailPartView(BoxLayout):
 
         part_lbl = PartLabel()
         part_popup = PartNumPopup()
-        print("part_popup.t.text = "+part_popup.t.text)
+        # print("part_popup.t.text = "+part_popup.t.text)
         part_popup.t.bind(text=part_lbl.setter('text'))
 
         category_lbl = CategoryLabel()
 
         desc_lbl = DescLabel()
         desc_popup = DescPopup()
-        print("popup.t.text = "+desc_popup.t.text)
+        # print("popup.t.text = "+desc_popup.t.text)
         desc_popup.t.bind(text=desc_lbl.setter('text'))
 
         stock_lbl = StockLabel()
         stock_popup = StockPopup()
-        print("popup.t.text = "+stock_popup.t.text)
+        # print("popup.t.text = "+stock_popup.t.text)
         stock_popup.t.bind(text=stock_lbl.setter('text'))
 
         price_lbl = PriceLabel()
         price_popup = PricePopup()
-        print("popup.t.text = "+price_popup.t.text)
+        # print("popup.t.text = "+price_popup.t.text)
         price_popup.t.bind(text=price_lbl.setter('text'))
 
         total_lbl = TotalLabel()
-        print('MyScreenManager.info.stock'+ MyScreenManager.info.stock, MyScreenManager.info.price)
+        # print('MyScreenManager.info.stock'+ MyScreenManager.info.stock, MyScreenManager.info.price)
 
         part_btn.bind(on_press=part_popup.open)
         desc_btn.bind(on_press=desc_popup.open)
         stock_btn.bind(on_press=stock_popup.open)
         price_btn.bind(on_press=price_popup.open)
-        # pic_btn.bind(on_press=self.go_back)
+        pic_btn.bind(on_press=self.change_picture)
         back_btn.bind(on_press=self.go_back)
         # part_btn.bind(on_press=self.change_quantity)
 
@@ -383,18 +470,28 @@ class DetailPartView(BoxLayout):
 
 
     def go_back(self, instance):
-        print('test', instance)
+        # print('test', instance)
         self.clear_widgets
 
 
     def change_picture(self, obj):
-        print("no camera yet")
+        print("I said IT DOESN'T DO ANYTHING! If you want it do then make it..")
 
 
 class SearchScreen(Screen):
+    search_item = None
+    def __init__(self, **kwargs):
+        super(SearchScreen, self).__init__(**kwargs)
+        self.add_widget(SearchForm())
+
     def search_word(self):
+        # print("SearchForm().search_input.text under SearchScreen ="+self.SearchForm().search_input.text)
         self.clear_widgets()
         self.add_widget(SearchForm())
+
+    def set_search_item(self, text):
+        self.search_item = text
+
 
 
 class ResultsScreen(Screen):
@@ -421,7 +518,6 @@ class MyScreenManager(ScreenManager):
             part = c.fetchone()
 
             self.info.pid = str(part[0])
-            print(self.info.pid,"this is the screenmanager button pid")
             self.info.part_number = str(part[1])
             self.info.category = str(part[2])
             self.info.description = str(part[3])
