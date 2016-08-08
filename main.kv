@@ -111,8 +111,9 @@
             font_size: 20
             on_release: print("test") # app.root.current  = 'reports'
         Button:
-            text: 'Label Generator'
+            text: 'QRCode Label Generator'
             font_size: 20
+            on_press: app.root.current  = 'barcode'
             on_release: print("Now we need to generate a qr code label for the item") # app.root.current  = 'reports'
         Button:
             text: 'Quit'
@@ -215,8 +216,13 @@ SearchForm:
         padding_x: 6
         text_size: self.width, None
         size: self.texture_size
+    Label:
+        text: 'Condition:'
+        halign: 'left'
+        padding_x: 6
+        text_size: self.width, None
+        size: self.texture_size
         color: 1,0,0,1
-
     Label:
         text: 'Category:'
         padding_x: 6
@@ -260,6 +266,28 @@ SearchForm:
     text_size: root.width, None
     size: self.texture_size
 
+<CategoryTextInput>:
+    update_text: update_text
+    id: update_text
+    multiline: False
+    text: str(app.root.info.category)
+
+
+<CategoryPopup>:
+    size_hint: (None, None)
+    size: (600,300)
+    on_dismiss: app.root.what_am_i()
+
+
+
+<DeletePopup>:
+    size_hint: (None, None)
+    size: (600,300)
+    title: "Are you SURE you want to delete this item?"
+    title_size: "30sp"
+    on_dismiss: app.root.current = 'search'
+
+
 
 <PartLabel>:
     text: str(app.root.info.part_number)
@@ -278,6 +306,12 @@ SearchForm:
     id: update_text
     multiline: False
     text: str(app.root.info.part_number)
+
+<NewUsedLabel>:
+    text: str(app.root.info.new_used)
+    halign: 'left'
+    text_size: root.width, None
+    size: self.texture_size
 
 <DescLabel>:
     text: str(app.root.info.description)

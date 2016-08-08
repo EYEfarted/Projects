@@ -65,12 +65,10 @@ class SearchForm(BoxLayout):
                     c.execute("SELECT * FROM Inventory WHERE Description LIKE "+l+" OR Category LIKE "+k+" OR Part_Number=?", (mypart,))
                 results = c.fetchall()
                 self.search_results.adapter.data.clear()
-                if results == []:
-                    x = [('No Results')]
-                    self.search_results.adapter.data.extend(x)
+
                 for res in results:
 
-                    Id, PartNum, SubCat, Desc, Stock, Price, Percent, Totdollars = res
+                    Id, PartNum, SubCat, Desc, Stock, Price, New_Used = res
                     parts = [("%s Part Number: %s Description: %s and you have %s in stock at %s each.") % (Id, PartNum, Desc, Stock, Price)]
 
                     self.search_results.adapter.data.extend(parts)
@@ -106,11 +104,11 @@ class SearchForm(BoxLayout):
             results = c.fetchall()
             self.search_results.adapter.data.clear()
             if results == []:
-                x = [('No Results')]
+                x = [('Item not found. Try different search or click to add')]
                 self.search_results.adapter.data.extend(x)
             for res in results:
 
-                Id, PartNum, SubCat, Desc, Stock, Price, Percent, Totdollars = res
+                Id, PartNum, SubCat, Desc, Stock, Price, New_Used = res
                 parts = [("%s Part Number: %s Description: %s and you have %s in stock at %s each.") % (Id, PartNum, Desc, Stock, Price)]
 
                 self.search_results.adapter.data.extend(parts)
@@ -125,7 +123,7 @@ class PartDetails(EventDispatcher):
     description = StringProperty('')
     stock = StringProperty('')
     price = StringProperty('')
-    percent = StringProperty('')
+    new_used = StringProperty('')
     pid = StringProperty('')
 
 class Details(BoxLayout):
@@ -133,24 +131,41 @@ class Details(BoxLayout):
 
 class LocationButton(ListItemButton, Button):
     def what_am_i(self):
-        x = self.text
-        y = x.find(" ")
-        z = x[:y]
-        with conn:
-            c = conn.cursor()
-            c.execute("SELECT * FROM Inventory WHERE ID=?", (z,))
-            part = c.fetchone()
-            # print('Heres part[0]', part[0])
+        if self.text != 'Item not found. Try different search or click to add':
+            x = self.text
+            y = x.find(" ")
+            z = x[:y]
+            with conn:
+                c = conn.cursor()
+                c.execute("SELECT * FROM Inventory WHERE ID=?", (z,))
+                part = c.fetchone()
+                # print('Heres part[0]', part[0])
 
-            self.parent.parent.parent.parent.parent.parent.info.pid = (str(part[0]))
-            # print(self.parent.parent.parent.parent.parent.parent.info.pid,"this is the location button pid")
-            self.parent.parent.parent.parent.parent.parent.info.part_number = str(part[1])
-            # print(self.parent.parent.parent.parent.parent.parent.info.part_number,"this is the location button part_number")
-            self.parent.parent.parent.parent.parent.parent.info.category = str(part[2])
-            self.parent.parent.parent.parent.parent.parent.info.description = str(part[3])
-            self.parent.parent.parent.parent.parent.parent.info.stock = str(part[4])
-            self.parent.parent.parent.parent.parent.parent.info.price = str(part[5])
-            self.parent.parent.parent.parent.parent.parent.info.percent = str(part[6])
+                self.parent.parent.parent.parent.parent.parent.info.pid = (str(part[0]))
+                # print(self.parent.parent.parent.parent.parent.parent.info.pid,"this is the location button pid")
+                self.parent.parent.parent.parent.parent.parent.info.part_number = str(part[1])
+                # print(self.parent.parent.parent.parent.parent.parent.info.part_number,"this is the location button part_number")
+                self.parent.parent.parent.parent.parent.parent.info.category = str(part[2])
+                self.parent.parent.parent.parent.parent.parent.info.description = str(part[3])
+                self.parent.parent.parent.parent.parent.parent.info.stock = str(part[4])
+                self.parent.parent.parent.parent.parent.parent.info.price = str(part[5])
+                self.parent.parent.parent.parent.parent.parent.info.new_used = str(part[6])
+        else:
+            with conn:
+                c = conn.cursor()
+                new_item = (0, 'category', 'description', 0, 0, 'new')
+                c.execute("INSERT INTO Inventory (Part_Number, Category, Description, Stock, Price, New_Used) VALUES(?, ?, ?, ?, ?, ?)", new_item)
+                conn.commit()
+                c.execute("SELECT * FROM Inventory WHERE ID=?", (c.lastrowid,))
+                part = c.fetchone()
+
+                self.parent.parent.parent.parent.parent.parent.info.pid = (str(part[0]))
+                self.parent.parent.parent.parent.parent.parent.info.part_number = str(part[1])
+                self.parent.parent.parent.parent.parent.parent.info.category = str(part[2])
+                self.parent.parent.parent.parent.parent.parent.info.description = str(part[3])
+                self.parent.parent.parent.parent.parent.parent.info.stock = str(part[4])
+                self.parent.parent.parent.parent.parent.parent.info.price = str(part[5])
+                self.parent.parent.parent.parent.parent.parent.info.new_used = str(part[6])
 
 
 
@@ -162,7 +177,7 @@ class LoginScreen(Screen):
 class BarcodeScreen(Screen):
     def generate_barcode(self):
         time.sleep(1)
-        self.parent.current = 'search'
+        self.parent.current = 'select'
 
 class SelectScreen(Screen):
     pass
@@ -185,12 +200,13 @@ class UploadScreen(Screen):
             print("Creating table...")
             c = conn.cursor()
             c.execute("DROP TABLE IF EXISTS Inventory")
-            c.execute("CREATE TABLE Inventory(ID INTEGER PRIMARY KEY, Part_Number TEXT, Category TEXT, Description TEXT, Stock INTEGER, Price REAL, Percent INTEGER, Value REAL)")
+            print("Checked for and dropped table if exists")
+            c.execute("CREATE TABLE Inventory(ID INTEGER PRIMARY KEY, Part_Number INTEGER, Category TEXT, Description TEXT, Stock INTEGER, Price REAL, New_Used TEXT)")
             print("Done.")
             print("Importing data now...")
     ## the inport happens here:
             things = csv.reader(open(csvfile))
-            c.executemany("INSERT INTO Inventory (Part_Number, Category, Description, Stock, Price, Percent, Value) VALUES(?, ?, ?, ?, ?, ?, ?)", things)
+            c.executemany("INSERT INTO Inventory (Part_Number, Category, Description, Stock, Price, New_Used) VALUES(?, ?, ?, ?, ?, ?)", things)
             conn.commit()
         except sqlite3.Error:
             if conn:
@@ -212,7 +228,8 @@ class ReportsScreen(Screen):
 class MyBackButton(Button):
     pass
 
-
+class NewUsedLabel(Label):
+    pass
 class PartLabel(Label):
     pass
 class DescLabel(Label):
@@ -345,6 +362,46 @@ class StockPopup(Popup):
         print('Pressed the no button')
 
 
+class CategoryTextInput(TextInput):
+    def update_category(self, obj):
+        with conn:
+            c = conn.cursor()
+            pid = str(MyScreenManager.info.pid)
+            new = str(self.text)
+            c.execute("UPDATE Inventory SET Category= ? WHERE ID = ?", (new, pid))
+            conn.commit()
+
+
+class CategoryPopup(Popup):
+
+    t = None
+    def __init__(self, **kwargs):
+        super(CategoryPopup, self).__init__(**kwargs)
+        self.t = CategoryTextInput(on_text_validate=self.dismiss)
+        self.t.bind(on_text_validate=self.t.update_category)
+        h = BoxLayout(orientation='horizontal')
+        v = BoxLayout(orientation='vertical')
+        n = Button(text='No', size_hint_x=0.25)
+        yes_btn = Button(text='Yes', size_hint_x=0.25)
+        l = Label(text='Commit changes to database?', size_hint_x=0.5)
+        self.title = "What is the new Catefory?"
+        h.add_widget(l)
+        h.add_widget(yes_btn)
+        h.add_widget(n)
+
+        v.add_widget(self.t)
+        v.add_widget(h)
+
+        self.add_widget(v)
+
+        n.bind(on_press=self.some_function)
+        n.bind(on_release=self.dismiss)
+        yes_btn.bind(on_press=self.t.update_category)
+        yes_btn.bind(on_release=self.dismiss)
+
+    def some_function(self, obj):
+        self.t.text = MyScreenManager.info.price
+        print('Pressed the no button')
 
 
 class PriceTextInput(TextInput):
@@ -387,6 +444,41 @@ class PricePopup(Popup):
         self.t.text = MyScreenManager.info.price
         print('Pressed the no button')
 
+
+class DeletePopup(Popup):
+    def __init__(self, **kwargs):
+        super(DeletePopup, self).__init__(**kwargs)
+
+        y = Button(text='Yes')
+        y.font_size = y.height - 10
+        y.background_color = 0,1,0,1
+
+        n = Button(text='No')
+        n.font_size = n.height - 10
+        n.background_color = 1,0,0,1
+
+        b = BoxLayout()
+        b.add_widget(y)
+        b.add_widget(n)
+
+        self.add_widget(b)
+
+        n.bind(on_press=self.some_function)
+        n.bind(on_release=self.dismiss)
+        # c.execute("SELECT * FROM Inventory WHERE Part_Number=?", (partnum,))
+        y.bind(on_press=self.other_function)
+        y.bind(on_release=self.dismiss)
+
+    def some_function(self, obj):
+        print('Pressed the no button')
+
+
+    def other_function(self, obj):
+        with conn:
+            c = conn.cursor()
+            c.execute("DELETE FROM Inventory WHERE ID =?", (MyScreenManager.info.pid,))
+            conn.commit()
+
 class MyImage(Button):
     pass
 class MyRefreshButton(Button):
@@ -408,6 +500,8 @@ class DetailPartView(BoxLayout):
         stock_btn = Button(text='Update Quantity')
         price_btn = Button(text='Adjust Price')
         pic_btn = Button(text='Doesn\'t do anything')
+        delete_btn = Button(text='Delete this item')
+        cat_btn = Button(text='Change Category')
         back_btn = MyBackButton()
 
         pic = MyImage()
@@ -418,6 +512,8 @@ class DetailPartView(BoxLayout):
         part_popup.t.bind(text=part_lbl.setter('text'))
 
         category_lbl = CategoryLabel()
+        cat_popup = CategoryPopup()
+        cat_popup.t.bind(text=category_lbl.setter('text'))
 
         desc_lbl = DescLabel()
         desc_popup = DescPopup()
@@ -437,15 +533,20 @@ class DetailPartView(BoxLayout):
         total_lbl = TotalLabel()
         # print('MyScreenManager.info.stock'+ MyScreenManager.info.stock, MyScreenManager.info.price)
 
+        newused = NewUsedLabel()
+
         part_btn.bind(on_press=part_popup.open)
         desc_btn.bind(on_press=desc_popup.open)
         stock_btn.bind(on_press=stock_popup.open)
         price_btn.bind(on_press=price_popup.open)
         pic_btn.bind(on_press=self.change_picture)
+        cat_btn.bind(on_press=cat_popup.open)
+        delete_btn.bind(on_press=self.delete_item)
         back_btn.bind(on_press=self.go_back)
         # part_btn.bind(on_press=self.change_quantity)
 
         v.add_widget(part_lbl)
+        v.add_widget(newused)
         v.add_widget(category_lbl)
         v.add_widget(desc_lbl)
         v.add_widget(stock_lbl)
@@ -458,6 +559,8 @@ class DetailPartView(BoxLayout):
         b.add_widget(pic)
 
         g.add_widget(part_btn)
+        g.add_widget(delete_btn)
+        g.add_widget(cat_btn)
         g.add_widget(desc_btn)
         g.add_widget(stock_btn)
         g.add_widget(price_btn)
@@ -466,6 +569,12 @@ class DetailPartView(BoxLayout):
 
         self.add_widget(b)
         self.add_widget(g)
+
+    def delete_item(self, instance):
+        pid = MyScreenManager.info.pid
+        print(pid)
+        popup = DeletePopup()
+        popup.open()
 
 
 
@@ -523,7 +632,7 @@ class MyScreenManager(ScreenManager):
             self.info.description = str(part[3])
             self.info.stock = str(part[4])
             self.info.price = str(part[5])
-            self.info.percent = str(part[6])
+            self.info.new_used = str(part[6])
 
 
 class MainApp(App):
