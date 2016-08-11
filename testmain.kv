@@ -1,0 +1,356 @@
+#:kivy 1.4
+#:import main main
+
+#:import ListAdapter kivy.adapters.listadapter.ListAdapter
+<MyScreenManager>:
+    id: screen_manager
+    screen_one: LoginScreen
+    screen_two: SelectScreen
+    screen_three: SearchScreen
+    screen_four: ResultsScreen
+    screen_five: BarcodeScreen
+    screen_six: BarcodeScreen
+
+
+    LoginScreen:
+        id: LoginScreen
+        manager: screen_manager
+        name: 'login'
+
+    SelectScreen:
+        id: SelectScreen
+        manager: screen_manager
+        name: 'select'
+
+    SearchScreen:
+        id: SearchScreen
+        manager: screen_manager
+        name: 'search'
+
+    ResultsScreen:
+        id: ResultsScreen
+        manager: screen_manager
+        name: 'results'
+
+    BarcodeScreen:
+        id: BarcodeScreen
+        manager: screen_manager
+        name: 'barcode'
+
+    UploadScreen:
+        id: UploadScreen
+        manager: screen_manager
+        name: 'upload'
+
+<LoginScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            size_hint_y: .3
+            text: 'Welcome to the L.I.S.T.'
+            font_size: 30
+        Image:
+            size_hint_y: .7
+            source: 'logo.png'
+            allow_stretch: True
+            keep_ratio: True
+        BoxLayout:
+            orientation: 'vertical'
+            GridLayout:
+                size_hint_y: 3.5
+                cols: 2
+                padding: 5,5,5,5
+                spacing: 5,5
+                Label:
+                    text: 'Username'
+                    text_size: self.size
+                    halign: 'center'
+                    valign: 'middle'
+                    size_hint: .5, 1
+                TextInput:
+                    id: uname
+                    text_hint: 'Username'
+                    multiline: False
+                    size_hint: 3, 1
+                Label:
+                    text: 'Password'
+                    text_size: self.size
+                    halign: 'center'
+                    valign: 'middle'
+                    size: self.width, self.height
+                TextInput:
+                    id: pword
+                    multiline: False
+                    password: True
+            Button:
+                text: 'Login'
+                size: self.parent.width, 20
+                font_size: 30
+                on_release: root.creds()
+
+SearchForm:
+<SearchForm>:
+    orientation: 'vertical'
+    search_input: search_box
+    search_results: search_results_list
+    TextInput:
+        id: search_box
+        height: '150dp'
+        size_hint_y: None
+        focus: True
+        multiline: False
+        font_size: 30
+        on_text_validate: root.search_location(self.text)
+    BoxLayout:
+        orientation: 'horizontal'
+        height: '70dp'
+        size_hint_y: None
+        Button:
+            text: 'Search'
+            font_size: 17
+            size_hint_x: 50
+            on_press: self.parent.parent.search_location(self.parent.parent.ids['search_box'].text)
+        Button:
+            text: 'Menu'
+            font_size: 17
+            size_hint_x: 50
+            on_press: app.root.current = 'select'
+
+    ListView:
+        id: search_results_list
+        adapter:
+            ListAdapter(data=[], cls=main.LocationButton)
+
+<LocationButton>:
+    size_hint_x: 100
+    on_press: self.what_am_i()
+    on_release: app.root.current = 'results'
+    is_selected: False
+
+<SelectScreen>:
+    GridLayout:
+        cols: 2
+        padding: 25, 25, 25, 25
+        spacing: 25, 25
+        Button:
+            text: 'Search'
+            font_size: 20
+            on_release: app.root.current  = 'search'
+        Button:
+            text: 'Upload'
+            font_size: 20
+            on_release: app.root.current  = 'upload'
+        Button:
+            text: 'Scan'
+            font_size: 20
+            on_release: print("test") # app.root.current  = 'scan'
+        Button:
+            text: 'Reports'
+            font_size: 20
+            on_release: print("test") # app.root.current  = 'reports'
+        Button:
+            text: 'QRCode Label Generator'
+            font_size: 20
+            on_press: app.root.current  = 'barcode'
+            on_release: print("Now we need to generate a qr code label for the item") # app.root.current  = 'reports'
+        Button:
+            text: 'Quit'
+            font_size: 20
+            on_release: app.get_running_app().stop()
+
+<SearchScreen>:
+    on_enter: self.search_word()
+
+<ResultsScreen>:
+    part_popup: part_popup.__self__
+    condition_popup: condition_popup.__self__
+    category_popup: category_popup.__self__
+    description_popup: description_popup.__self__
+    stock_popup: stock_popup.__self__
+    price_popup: price_popup.__self__
+
+    GridLayout:
+        id: g1
+        cols: 2
+        BoxLayout:
+            orientation: 'vertical'
+            Label:
+                id: part_number
+                text: 'Part Number:   '+ str(self.parent.parent.parent.manager.info.part_number)
+                halign: 'left'
+                padding_x: '5sp'
+                text_size: self.width, None
+                size: self.texture_size
+            Label:
+                id: condition
+                text: 'Condition:    '+ str(self.parent.parent.parent.manager.info.condition)
+                halign: 'left'
+                padding_x: '5sp'
+                text_size: self.width, None
+                size: self.texture_size
+                color: 1,0,0,1
+            Label:
+                id: category
+                text: 'Category:    '+ str(self.parent.parent.parent.manager.info.category)
+                halign: 'left'
+                padding_x: '5sp'
+                text_size: self.width, None
+                size: self.texture_size
+            Label:
+                id: description
+                text: 'Description:    '+ str(self.parent.parent.parent.manager.info.description)
+                halign: 'left'
+                padding_x: '5sp'
+                text_size: self.width, None
+                size: self.texture_size
+            Label:
+                id: stock
+                text: 'In Stock:    '+ str(self.parent.parent.parent.manager.info.stock)
+                halign: 'left'
+                padding_x: '5sp'
+                text_size: self.width, None
+                size: self.texture_size
+            Label:
+                id: price
+                text: 'Cost:     '+'$'+ str(self.parent.parent.parent.manager.info.price)
+                halign: 'left'
+                padding_x: '5sp'
+                text_size: self.width, None
+                size: self.texture_size
+            Label:
+                id: total
+                text: 'Total:     '+'$'+str(type(self.parent.parent.parent.manager.info.price)) + str(self.parent.parent.parent.manager.info.stock)
+                halign: 'left'
+                padding_x: '5sp'
+                text_size: self.width, None
+                size: self.texture_size
+        Image:
+            source: str(self.parent.parent.manager.info.part_number)+'.jpg'
+
+        Button:
+            id: part_btn
+            text: "change part number"
+            on_press: root.part_popup.open()
+        Button:
+            id: condition_btn
+            text: "change condition"
+            on_press: root.condition_popup.open()
+        Button:
+            id: category_btn
+            text: "change category"
+            on_press: root.category_popup.open()
+        Button:
+            id: description_btn
+            text: "change description"
+            on_press: root.description_popup.open()
+        Button:
+            id: stock_btn
+            text: "change stock"
+            on_press: root.stock_popup.open()
+        Button:
+            id: price_btn
+            text: "change price"
+            on_press: root.price_popup.open()
+        Button:
+            text: "go back"
+            on_press: app.root.current = 'search'
+        Popup:
+            id: part_popup
+            size_hint: (None, None)
+            size: (600,400)
+            on_parent: if self.parent == g1: g1.remove_widget(self)
+            title: "Change part number"
+            BoxLayout:
+                orientation: 'vertical'
+
+                TextInput:
+                    id: text
+                    multiline: False
+                    on_text: part_number.text = 'Part Number:   '+self.text
+                    on_text_validate: app.root.update("Part_Number", self.text), app.root.what_am_i()
+                Button:
+                    text: "Dismiss"
+                    on_press: part_popup.dismiss()
+        Popup:
+            id: condition_popup
+            size_hint: (None, None)
+            size: (600,400)
+            on_parent: if self.parent == g1: g1.remove_widget(self)
+            title: "Change Condition"
+            BoxLayout:
+                orientation: 'vertical'
+
+                TextInput:
+                    id: text
+                    multiline: False
+                    on_text: condition.text = 'Condition:   '+self.text
+                    on_text_validate: app.root.update("Condition", "'"+self.text+"'"), app.root.what_am_i()
+
+                Button:
+                    text: "Dismiss"
+                    on_press: condition_popup.dismiss()
+
+        Popup:
+            id: category_popup
+            size_hint: (None, None)
+            size: (600,400)
+            on_parent: if self.parent == g1: g1.remove_widget(self)
+            title: "Change Category"
+            BoxLayout:
+                orientation: 'vertical'
+
+                TextInput:
+                    multiline: False
+                    on_text: category.text = 'Category:   '+self.text
+                    on_text_validate: app.root.update("Category", "'"+self.text+"'"), app.root.what_am_i()
+                Button:
+                    text: "Dismiss"
+                    on_press: category_popup.dismiss()
+        Popup:
+            id: description_popup
+            size_hint: (None, None)
+            size: (600,400)
+            on_parent: if self.parent == g1: g1.remove_widget(self)
+            title: "Change description"
+            BoxLayout:
+                orientation: 'vertical'
+
+                TextInput:
+                    multiline: False
+                    on_text: description.text = 'Description:   '+self.text
+                    on_text_validate: app.root.update("Description", "'"+self.text+"'"), app.root.what_am_i()
+                Button:
+                    text: "Dismiss"
+                    on_press: description_popup.dismiss()
+        Popup:
+            id: stock_popup
+            size_hint: (None, None)
+            size: (600,400)
+            on_parent: if self.parent == g1: g1.remove_widget(self)
+            title: "Change Stock"
+            BoxLayout:
+                orientation: 'vertical'
+
+                TextInput:
+                    multiline: False
+                    on_text: stock.text = 'In Stock:   '+self.text
+                    on_text_validate: app.root.update("Stock", "'"+self.text+"'"), app.root.what_am_i()
+                Button:
+                    text: "Dismiss"
+                    on_press: stock_popup.dismiss()
+        Popup:
+            id: price_popup
+            size_hint: (None, None)
+            size: (600,400)
+            on_parent: if self.parent == g1: g1.remove_widget(self)
+            title: "Change price"
+            BoxLayout:
+                orientation: 'vertical'
+
+                TextInput:
+                    multiline: False
+                    on_text: price.text = 'Cost:   '+self.text
+                    on_text_validate: app.root.update("Price", "'"+self.text+"'"), app.root.what_am_i()
+                Button:
+                    text: "Dismiss"
+                    on_press: price_popup.dismiss()

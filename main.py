@@ -115,8 +115,6 @@ class SearchForm(BoxLayout):
                 self.search_results._trigger_reset_populate()
             SearchScreen.search_item = self.search_input.text
 
-
-
 class PartDetails(EventDispatcher):
     part_number = StringProperty('')
     category = StringProperty('')
@@ -156,8 +154,8 @@ class LocationButton(ListItemButton, Button):
         else:
             with conn:
                 c = conn.cursor()
-                new_item = (0, 'category', 'description', 0, 0, 'new')
-                c.execute("INSERT INTO Inventory (Part_Number, Category, Description, Stock, Price, New_Used) VALUES(?, ?, ?, ?, ?, ?)", new_item)
+                new_item = (0, 1234, 'category', 'description', 0, 0, 'new')
+                c.execute("INSERT INTO Inventory (Part_Number, Shelf, Category, Description, Stock, Price, New_Used) VALUES(?, ?, ?, ?, ?, ?, ?)", new_item)
                 conn.commit()
                 c.execute("SELECT * FROM Inventory WHERE ID=?", (c.lastrowid,))
                 part = c.fetchone()
@@ -186,10 +184,6 @@ class BarcodeScreen(Screen):
 class SelectScreen(Screen):
     pass
 
-
-
-
-
 class UploadScreen(Screen):
     upload_file = ObjectProperty()
     def go_back(self):
@@ -205,7 +199,7 @@ class UploadScreen(Screen):
             c = conn.cursor()
             c.execute("DROP TABLE IF EXISTS Inventory")
             print("Checked for and dropped table if exists")
-            c.execute("CREATE TABLE Inventory(ID INTEGER PRIMARY KEY, Part_Number INTEGER, Shelf INTEGER, Category TEXT, Description TEXT, Stock INTEGER, Price REAL, New_Used TEXT)")
+            c.execute("CREATE TABLE Inventory(ID INTEGER PRIMARY KEY, Part_Number INTEGER, Shelf INTEGER, Category TEXT, Description TEXT, Stock INTEGER, Price REAL, Condition TEXT)")
             print("Done.")
             print("Importing data now...")
     ## the inport happens here:
@@ -213,7 +207,7 @@ class UploadScreen(Screen):
             for line in things:
                 stuff = [(i) for i in line]
                 print(stuff)
-                c.executemany("INSERT INTO Inventory (Part_Number, Shelf, Category, Description, Stock, Price, New_Used) VALUES(?, ?, ?, ?, ?, ?, ?)", (stuff,))
+                c.executemany("INSERT INTO Inventory (Part_Number, Shelf, Category, Description, Stock, Price, Condition) VALUES(?, ?, ?, ?, ?, ?, ?)", (stuff,))
             conn.commit()
         except sqlite3.Error:
             if conn:
@@ -224,30 +218,12 @@ class UploadScreen(Screen):
             if conn:
                 print("Data imported.")
 
-
-
-
-
-
 class ReportsScreen(Screen):
     pass
 
-class MyBackButton(Button):
-    pass
 
-class NewUsedLabel(Label):
-    pass
+
 class PartLabel(Label):
-    pass
-class DescLabel(Label):
-    pass
-class CategoryLabel(Label):
-    pass
-class StockLabel(Label):
-    pass
-class PriceLabel(Label):
-    pass
-class TotalLabel(Label):
     pass
 
 class PartNumTextInput(TextInput):
@@ -289,6 +265,11 @@ class PartNumPopup(Popup):
         self.t.text = MyScreenManager.info.part_number
         print('Pressed the no button')
 
+
+
+class DescLabel(Label):
+    pass
+
 class DescTextInput(TextInput):
     def update_description(self, obj):
         with conn:
@@ -328,6 +309,11 @@ class DescPopup(Popup):
         self.t.text = MyScreenManager.info.description
         print('Pressed the no button')
 
+
+
+class StockLabel(Label):
+    pass
+
 class StockTextInput(TextInput):
     def update_stock(self, obj):
         with conn:
@@ -336,7 +322,6 @@ class StockTextInput(TextInput):
             new = str(self.text)
             c.execute("UPDATE Inventory SET Stock= ? WHERE ID = ?", (new, pid))
             conn.commit()
-
 
 class StockPopup(Popup):
     t = None
@@ -368,6 +353,10 @@ class StockPopup(Popup):
         self.t.text = MyScreenManager.info.stock
         print('Pressed the no button')
 
+
+
+class CategoryLabel(Label):
+    pass
 
 class CategoryTextInput(TextInput):
     def update_category(self, obj):
@@ -435,6 +424,9 @@ class CategoryPopup(Popup):
 
 
 
+class PriceLabel(Label):
+    pass
+
 class PriceTextInput(TextInput):
     def update_price(self, obj):
         with conn:
@@ -476,6 +468,16 @@ class PricePopup(Popup):
         print('Pressed the no button')
 
 
+
+class MyBackButton(Button):
+    pass
+
+class NewUsedLabel(Label):
+    pass
+
+class TotalLabel(Label):
+    pass
+
 class DeletePopup(Popup):
     def __init__(self, **kwargs):
         super(DeletePopup, self).__init__(**kwargs)
@@ -512,8 +514,11 @@ class DeletePopup(Popup):
 
 class MyImage(Button):
     pass
+
 class MyRefreshButton(Button):
     pass
+
+
 
 class DetailPartView(BoxLayout):
     def __init__(self, **kwargs):
@@ -617,7 +622,6 @@ class DetailPartView(BoxLayout):
     def change_picture(self, obj):
         print(MyScreenManager.info.coordinates+" are the coordinates")
 
-
 class SearchScreen(Screen):
     search_item = None
     def __init__(self, **kwargs):
@@ -631,8 +635,6 @@ class SearchScreen(Screen):
 
     def set_search_item(self, text):
         self.search_item = text
-
-
 
 class ResultsScreen(Screen):
     def show_results(self):
