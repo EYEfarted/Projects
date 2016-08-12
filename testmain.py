@@ -32,7 +32,8 @@ import csv
 import barcode
 import json
 
-
+username = ''
+password = ''
 
 
 class SearchForm(BoxLayout):
@@ -128,6 +129,39 @@ class SearchScreen(Screen):
     def set_search_item(self, text):
         self.search_item = text
 
+class UploadScreen(Screen):
+    upload_file = ObjectProperty()
+    def go_back(self):
+        print(self.upload_file.text)
+        self.parent.current = 'select'
+
+
+    def create_table(self):
+        csvfile = self.upload_file.text
+
+        try:
+            print("Creating table...")
+            c = conn.cursor()
+            c.execute("DROP TABLE IF EXISTS Inventory")
+            print("Checked for and dropped table if exists")
+            c.execute("CREATE TABLE Inventory(ID INTEGER PRIMARY KEY, Part_Number INTEGER, Shelf INTEGER, Category TEXT, Description TEXT, Stock INTEGER, Price REAL, Condition TEXT)")
+            print("Done.")
+            print("Importing data now...")
+    ## the inport happens here:
+            things = csv.reader(open(csvfile))
+            for line in things:
+                stuff = [(i) for i in line]
+                print(stuff)
+                c.executemany("INSERT INTO Inventory (Part_Number, Shelf, Category, Description, Stock, Price, Condition) VALUES(?, ?, ?, ?, ?, ?, ?)", (stuff,))
+            conn.commit()
+        except sqlite3.Error:
+            if conn:
+                conn.rollback()
+            print("Error %s:" % sqlite3.Error)
+            sys.exit(1)
+        finally:
+            if conn:
+                print("Data imported.")
 
 class PartDetails(EventDispatcher):
     part_number = ObjectProperty()
@@ -187,8 +221,13 @@ class LocationButton(ListItemButton, Button):
 
 class LoginScreen(Screen):
     def creds(self):
-        if self.ids['uname'].text == '' and self.ids['pword'].text == '':
+        if self.ids['uname'].text == username and self.ids['pword'].text == password:
             self.parent.current = 'select'
+
+class BarcodeScreen(Screen):
+    def generate_barcode(self):
+        time.sleep(1)
+        self.parent.current = 'select'
 
 
 class SelectScreen(Screen):
@@ -229,26 +268,6 @@ class UploadScreen(Screen):
                 print("Data imported.")
 
 
-
-
-
-
-
-
-
-
-
-
-class MyTextInput(TextInput):
-    def update(self, obj, column):
-        with conn:
-            c = conn.cursor()
-            pid = str(MyScreenManager.info.pid)
-            new = str(self.text)
-            self.column = column
-            command = "UPDATE Inventory SET {column}= {new} WHERE ID = {pid}".format(self.column, new, self.pid)
-            c.execute("UPDATE Inventory SET Part_Number= ? WHERE ID = ?", (new, pid))
-            conn.commit()
 
 class SearchScreen(Screen):
     search_item = None

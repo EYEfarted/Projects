@@ -173,57 +173,113 @@ SearchForm:
         id: g1
         cols: 2
         BoxLayout:
-            orientation: 'vertical'
-            Label:
-                id: part_number
-                text: 'Part Number:   '+ str(self.parent.parent.parent.manager.info.part_number)
-                halign: 'left'
-                padding_x: '5sp'
-                text_size: self.width, None
-                size: self.texture_size
-            Label:
-                id: condition
-                text: 'Condition:    '+ str(self.parent.parent.parent.manager.info.condition)
-                halign: 'left'
-                padding_x: '5sp'
-                text_size: self.width, None
-                size: self.texture_size
-                color: 1,0,0,1
-            Label:
-                id: category
-                text: 'Category:    '+ str(self.parent.parent.parent.manager.info.category)
-                halign: 'left'
-                padding_x: '5sp'
-                text_size: self.width, None
-                size: self.texture_size
-            Label:
-                id: description
-                text: 'Description:    '+ str(self.parent.parent.parent.manager.info.description)
-                halign: 'left'
-                padding_x: '5sp'
-                text_size: self.width, None
-                size: self.texture_size
-            Label:
-                id: stock
-                text: 'In Stock:    '+ str(self.parent.parent.parent.manager.info.stock)
-                halign: 'left'
-                padding_x: '5sp'
-                text_size: self.width, None
-                size: self.texture_size
-            Label:
-                id: price
-                text: 'Cost:     '+'$'+ str(self.parent.parent.parent.manager.info.price)
-                halign: 'left'
-                padding_x: '5sp'
-                text_size: self.width, None
-                size: self.texture_size
-            Label:
-                id: total
-                text: 'Total:     '+'$'+str(type(self.parent.parent.parent.manager.info.price)) + str(self.parent.parent.parent.manager.info.stock)
-                halign: 'left'
-                padding_x: '5sp'
-                text_size: self.width, None
-                size: self.texture_size
+        size_hint_y: 0.5
+            BoxLayout:
+
+                orientation: 'vertical'
+                Label:
+
+                    text: 'Part Number: '
+                    halign: 'right'
+                    padding_x: '5sp'
+                    text_size: self.width, None
+                    size: self.texture_size
+                Label:
+
+                    text: 'Condition: '
+                    halign: 'right'
+                    padding_x: '5sp'
+                    text_size: self.width, None
+                    size: self.texture_size
+                    color: 1,0,0,1
+                Label:
+
+                    text: 'Category: '
+                    halign: 'right'
+                    padding_x: '5sp'
+                    text_size: self.width, None
+                    size: self.texture_size
+                Label:
+
+                    text: 'Description: '
+                    halign: 'right'
+                    padding_x: '5sp'
+                    text_size: self.width, None
+                    size: self.texture_size
+                Label:
+
+                    text: 'In Stock: '
+                    halign: 'right'
+                    padding_x: '5sp'
+                    text_size: self.width, None
+                    size: self.texture_size
+                Label:
+
+                    text: 'Cost: '+'$'
+                    halign: 'right'
+                    padding_x: '5sp'
+                    text_size: self.width, None
+                    size: self.texture_size
+                Label:
+
+                    text: 'Total: '+'$'
+                    halign: 'right'
+                    padding_x: '5sp'
+                    text_size: self.width, None
+                    size: self.texture_size
+
+            BoxLayout:
+                orientation: 'vertical'
+                Label:
+                    id: part_number
+                    text: str(self.parent.parent.parent.parent.manager.info.part_number)
+                    halign: 'left'
+                    padding_x: '5sp'
+                    text_size: self.width, None
+                    size: self.texture_size
+                Label:
+                    id: condition
+                    text: str(self.parent.parent.parent.parent.manager.info.condition)
+                    halign: 'left'
+                    padding_x: '5sp'
+                    text_size: self.width, None
+                    size: self.texture_size
+                    color: 1,0,0,1
+                Label:
+                    id: category
+                    text: str(self.parent.parent.parent.parent.manager.info.category)
+                    halign: 'left'
+                    padding_x: '5sp'
+                    text_size: self.width, None
+                    size: self.texture_size
+                Label:
+                    id: description
+                    text: str(self.parent.parent.parent.parent.manager.info.description)
+                    halign: 'left'
+                    padding_x: '5sp'
+                    text_size: self.width, None
+                    size: self.texture_size
+                Label:
+                    id: stock
+                    text: str(self.parent.parent.parent.parent.manager.info.stock)
+                    halign: 'left'
+                    padding_x: '5sp'
+                    text_size: self.width, None
+                    size: self.texture_size
+                Label:
+                    id: price
+                    text: str(self.parent.parent.parent.parent.manager.info.price)
+                    halign: 'left'
+                    padding_x: '5sp'
+                    text_size: self.width, None
+                    size: self.texture_size
+                Label:
+                    id: total
+                    text: str(type(self.parent.parent.parent.parent.manager.info.price)) + str(self.parent.parent.parent.parent.manager.info.stock)
+                    halign: 'left'
+                    padding_x: '5sp'
+                    text_size: self.width, None
+                    size: self.texture_size
         Image:
             source: str(self.parent.parent.manager.info.part_number)+'.jpg'
 
@@ -266,7 +322,8 @@ SearchForm:
                 TextInput:
                     id: text
                     multiline: False
-                    on_text: part_number.text = 'Part Number:   '+self.text
+                    text: part_number.text
+                    on_text: str(app.root.info.part_number)
                     on_text_validate: app.root.update("Part_Number", self.text), app.root.what_am_i()
                 Button:
                     text: "Dismiss"
@@ -283,7 +340,8 @@ SearchForm:
                 TextInput:
                     id: text
                     multiline: False
-                    on_text: condition.text = 'Condition:   '+self.text
+                    text: condition.text
+                    on_text: str(app.root.info.condition)
                     on_text_validate: app.root.update("Condition", "'"+self.text+"'"), app.root.what_am_i()
 
                 Button:
@@ -301,7 +359,8 @@ SearchForm:
 
                 TextInput:
                     multiline: False
-                    on_text: category.text = 'Category:   '+self.text
+                    text: category.text
+                    on_text: str(app.root.info.category)
                     on_text_validate: app.root.update("Category", "'"+self.text+"'"), app.root.what_am_i()
                 Button:
                     text: "Dismiss"
@@ -317,7 +376,8 @@ SearchForm:
 
                 TextInput:
                     multiline: False
-                    on_text: description.text = 'Description:   '+self.text
+                    text: description.text
+                    on_text: str(app.root.info.description)
                     on_text_validate: app.root.update("Description", "'"+self.text+"'"), app.root.what_am_i()
                 Button:
                     text: "Dismiss"
@@ -333,7 +393,8 @@ SearchForm:
 
                 TextInput:
                     multiline: False
-                    on_text: stock.text = 'In Stock:   '+self.text
+                    text: stock.text
+                    on_text: str(app.root.info.stock)
                     on_text_validate: app.root.update("Stock", "'"+self.text+"'"), app.root.what_am_i()
                 Button:
                     text: "Dismiss"
@@ -349,8 +410,62 @@ SearchForm:
 
                 TextInput:
                     multiline: False
-                    on_text: price.text = 'Cost:   '+self.text
+                    text: price.text
+                    on_text: str(app.root.info.price)
                     on_text_validate: app.root.update("Price", "'"+self.text+"'"), app.root.what_am_i()
                 Button:
                     text: "Dismiss"
                     on_press: price_popup.dismiss()
+
+<UploadScreen>:
+    upload_file: upload_file
+    BoxLayout:
+        orientation: 'vertical'
+        TextInput:
+            size_hint_y: 0.1
+            id: upload_file
+            text: 'new_into_inventory.csv'
+        # BoxLayout:
+        #     TabbedPanel:
+        #         tab_pos: "top_right"
+        #         default_tab_text: "List View"
+        #         default_tab_content: list_view_tab
+        #         #
+        #         # TabbedPanelHeader:
+        #         #     text: 'Icon View'
+        #         #     content: icon_view_tab
+        #
+        #         # FileChooserListView:
+        #         #     id: list_view_tab
+
+        FileChooserIconView:
+            id: icon_view_tab
+            on_selection: upload_file.text = self.selection[0]
+        BoxLayout:
+            size_hint_y: 0.1
+            Button:
+                text: 'Go Back'
+                on_press: self.parent.parent.parent.go_back()
+                color: 1,1,1,1
+                background_color: 1,0,0,1
+            Button:
+                text: 'Accept'
+                on_press: self.parent.parent.parent.create_table()
+            Button:
+                text: 'Deny'
+                on_press: app.root.current = 'select'
+<BarcodeScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            Label:
+                text: "Generated QRcodes go here"
+            Image:
+                source: "images/parts.jpg"
+        Button:
+            text: "Bulk generate qrcodes for all items"
+        Button:
+            text: "Generate QRcode for single item"
+        Button:
+            text: "Go Back"
+            on_press: app.root.current = "select"
