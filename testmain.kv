@@ -125,6 +125,7 @@ SearchForm:
     size_hint_x: 100
     on_press: self.what_am_i()
     on_release: app.root.current = 'results'
+    on_release: app.root.what_am_i()
     is_selected: False
 
 <SelectScreen>:
@@ -168,24 +169,19 @@ SearchForm:
     description_popup: description_popup.__self__
     stock_popup: stock_popup.__self__
     price_popup: price_popup.__self__
-
     GridLayout:
         id: g1
         cols: 2
         BoxLayout:
-        size_hint_y: 0.5
             BoxLayout:
-
                 orientation: 'vertical'
                 Label:
-
                     text: 'Part Number: '
                     halign: 'right'
                     padding_x: '5sp'
                     text_size: self.width, None
                     size: self.texture_size
                 Label:
-
                     text: 'Condition: '
                     halign: 'right'
                     padding_x: '5sp'
@@ -193,35 +189,30 @@ SearchForm:
                     size: self.texture_size
                     color: 1,0,0,1
                 Label:
-
                     text: 'Category: '
                     halign: 'right'
                     padding_x: '5sp'
                     text_size: self.width, None
                     size: self.texture_size
                 Label:
-
                     text: 'Description: '
                     halign: 'right'
                     padding_x: '5sp'
                     text_size: self.width, None
                     size: self.texture_size
                 Label:
-
                     text: 'In Stock: '
                     halign: 'right'
                     padding_x: '5sp'
                     text_size: self.width, None
                     size: self.texture_size
                 Label:
-
                     text: 'Cost: '+'$'
                     halign: 'right'
                     padding_x: '5sp'
                     text_size: self.width, None
                     size: self.texture_size
                 Label:
-
                     text: 'Total: '+'$'
                     halign: 'right'
                     padding_x: '5sp'
@@ -275,39 +266,51 @@ SearchForm:
                     size: self.texture_size
                 Label:
                     id: total
-                    text: str(type(self.parent.parent.parent.parent.manager.info.price)) + str(self.parent.parent.parent.parent.manager.info.stock)
+                    #text:  self.parent.parent.parent.parent.manager.total_cost(self.parent.parent.parent.parent.manager.info.stock, self.parent.parent.parent.parent.manager.info.price)
                     halign: 'left'
                     padding_x: '5sp'
                     text_size: self.width, None
                     size: self.texture_size
-        Image:
-            source: str(self.parent.parent.manager.info.part_number)+'.jpg'
-
         Button:
+            background_normal: ''
+            on_press: print("got it")
+            Image:
+                source: self.parent.parent.parent.manager.image_name(str(self.parent.parent.parent.manager.info.part_number))
+                y: self.parent.y
+                x: self.parent.x
+                size: self.parent.width, self.parent.height
+        Button:
+            size_hint_y: 0.1
             id: part_btn
             text: "change part number"
             on_press: root.part_popup.open()
         Button:
+            size_hint_y: 0.1
             id: condition_btn
             text: "change condition"
             on_press: root.condition_popup.open()
         Button:
+            size_hint_y: 0.1
             id: category_btn
             text: "change category"
             on_press: root.category_popup.open()
         Button:
+            size_hint_y: 0.1
             id: description_btn
             text: "change description"
             on_press: root.description_popup.open()
         Button:
+            size_hint_y: 0.1
             id: stock_btn
             text: "change stock"
             on_press: root.stock_popup.open()
         Button:
+            size_hint_y: 0.1
             id: price_btn
             text: "change price"
             on_press: root.price_popup.open()
         Button:
+            size_hint_y: 0.1
             text: "go back"
             on_press: app.root.current = 'search'
         Popup:
@@ -343,10 +346,12 @@ SearchForm:
                     text: condition.text
                     on_text: str(app.root.info.condition)
                     on_text_validate: app.root.update("Condition", "'"+self.text+"'"), app.root.what_am_i()
-
                 Button:
                     text: "Dismiss"
                     on_press: condition_popup.dismiss()
+
+
+
 
         Popup:
             id: category_popup
@@ -356,15 +361,27 @@ SearchForm:
             title: "Change Category"
             BoxLayout:
                 orientation: 'vertical'
-
                 TextInput:
+                    id: category_textinput
+                    size_hint_y: 0.15
                     multiline: False
                     text: category.text
                     on_text: str(app.root.info.category)
                     on_text_validate: app.root.update("Category", "'"+self.text+"'"), app.root.what_am_i()
-                Button:
-                    text: "Dismiss"
-                    on_press: category_popup.dismiss()
+                CategoryChecklist:
+
+                    size_hint_x: 0.9
+                BoxLayout:
+                    size_hint_y: 0.2
+                    Button:
+                        text: "Accept"
+                        on_press: category_popup.dismiss(), app.root.update("Category", "'"+app.root.info.category+"'")
+                        on_release:  app.root.what_am_i()
+                    Button:
+                        text: "Dismiss"
+                        on_press: category_popup.dismiss()
+                        on_release: app.root.what_am_i()
+
         Popup:
             id: description_popup
             size_hint: (None, None)
@@ -425,18 +442,6 @@ SearchForm:
             size_hint_y: 0.1
             id: upload_file
             text: 'new_into_inventory.csv'
-        # BoxLayout:
-        #     TabbedPanel:
-        #         tab_pos: "top_right"
-        #         default_tab_text: "List View"
-        #         default_tab_content: list_view_tab
-        #         #
-        #         # TabbedPanelHeader:
-        #         #     text: 'Icon View'
-        #         #     content: icon_view_tab
-        #
-        #         # FileChooserListView:
-        #         #     id: list_view_tab
 
         FileChooserIconView:
             id: icon_view_tab

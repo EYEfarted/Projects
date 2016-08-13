@@ -10,7 +10,6 @@ from kivy.lang import Builder
 from kivy.properties import ListProperty
 from kivy.properties import ObjectProperty
 from kivy.properties import StringProperty
-from kivy.uix.listview import ListItemButton, ListView
 from kivy.adapters.listadapter import ListAdapter
 from kivy.adapters.dictadapter import DictAdapter
 from kivy.uix.popup import Popup
@@ -21,6 +20,7 @@ from kivy.uix.camera import Camera
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.image import Image
+from kivy.uix.checkbox import CheckBox
 from kivy.adapters.models import SelectableDataItem
 from kivy.event import EventDispatcher
 from kivy.graphics import Color
@@ -31,6 +31,10 @@ import sqlite3
 import csv
 import barcode
 import json
+import os
+
+
+
 
 username = ''
 password = ''
@@ -117,51 +121,7 @@ class SearchForm(BoxLayout):
             SearchScreen.search_item = self.search_input.text
 
 
-class SearchScreen(Screen):
-    search_item = None
 
-
-    def search_word(self):
-        # print("SearchForm().search_input.text under SearchScreen ="+self.SearchForm().search_input.text)
-        self.clear_widgets()
-        self.add_widget(SearchForm())
-
-    def set_search_item(self, text):
-        self.search_item = text
-
-class UploadScreen(Screen):
-    upload_file = ObjectProperty()
-    def go_back(self):
-        print(self.upload_file.text)
-        self.parent.current = 'select'
-
-
-    def create_table(self):
-        csvfile = self.upload_file.text
-
-        try:
-            print("Creating table...")
-            c = conn.cursor()
-            c.execute("DROP TABLE IF EXISTS Inventory")
-            print("Checked for and dropped table if exists")
-            c.execute("CREATE TABLE Inventory(ID INTEGER PRIMARY KEY, Part_Number INTEGER, Shelf INTEGER, Category TEXT, Description TEXT, Stock INTEGER, Price REAL, Condition TEXT)")
-            print("Done.")
-            print("Importing data now...")
-    ## the inport happens here:
-            things = csv.reader(open(csvfile))
-            for line in things:
-                stuff = [(i) for i in line]
-                print(stuff)
-                c.executemany("INSERT INTO Inventory (Part_Number, Shelf, Category, Description, Stock, Price, Condition) VALUES(?, ?, ?, ?, ?, ?, ?)", (stuff,))
-            conn.commit()
-        except sqlite3.Error:
-            if conn:
-                conn.rollback()
-            print("Error %s:" % sqlite3.Error)
-            sys.exit(1)
-        finally:
-            if conn:
-                print("Data imported.")
 
 class PartDetails(EventDispatcher):
     part_number = ObjectProperty()
@@ -186,14 +146,14 @@ class LocationButton(ListItemButton, Button):
                 c = conn.cursor()
                 c.execute("SELECT * FROM Inventory WHERE ID=?", (z,))
                 part = c.fetchone()
-                # print('Heres part[0]', part[0])
+                print('Heres part[0]', part[0])
 
                 self.parent.parent.parent.parent.parent.parent.info.pid = (str(part[0]))
-                # print(self.parent.parent.parent.parent.parent.parent.info.pid,"this is the location button pid")
+                print(self.parent.parent.parent.parent.parent.parent.info.pid,"this is the location button pid")
                 self.parent.parent.parent.parent.parent.parent.info.part_number = str(part[1])
                 self.parent.parent.parent.parent.parent.parent.info.coordinates = str(part[2])
 
-                # print(self.parent.parent.parent.parent.parent.parent.info.part_number,"this is the location button part_number")
+                print(self.parent.parent.parent.parent.parent.parent.info.part_number,"this is the location button part_number")
                 self.parent.parent.parent.parent.parent.parent.info.category = str(part[3])
                 self.parent.parent.parent.parent.parent.parent.info.description = str(part[4])
                 self.parent.parent.parent.parent.parent.parent.info.stock = str(part[5])
@@ -268,6 +228,35 @@ class UploadScreen(Screen):
                 print("Data imported.")
 
 
+class CategoryChecklist(GridLayout):
+    category_textinput = ''
+
+    def __init__(self, **kwargs):
+        super(CategoryChecklist, self).__init__(**kwargs)
+        self.cols = 4
+
+
+        with conn:
+            c = conn.cursor()
+            c.execute("SELECT DISTINCT Category FROM Inventory")
+            part = c.fetchall()
+            for i in part:
+                check = CheckBox(group='categories')
+                check.id = i[0]
+                check.bind(active=self.on_checkbox_active)
+                print(check.id)
+                self.add_widget(check)
+                self.add_widget(Label(text=i[0]))
+
+    def on_checkbox_active(self, checkbox, value):
+        if value:
+            print('The checkbox', self.category_textinput, 'is active', checkbox.id)
+            MyScreenManager.info.category = checkbox.id
+            print(MyScreenManager.info.category)
+        else:
+            print('The checkbox', checkbox, 'is inactive')
+
+
 
 class SearchScreen(Screen):
     search_item = None
@@ -297,24 +286,41 @@ class MyScreenManager(ScreenManager):
     info = PartDetails()
 
 
+    def total_cost(self, stock, price):
+        if stock == None:
+            print("Stock = ", stock)
+        if price == None:
+            print("Price = ", price)
+        else:
+            print("They equal NONE")
+
+    def image_name(self, part_number):
+        if os.path.exists(part_number+'.jpg') == True:
+            return (part_number+'.jpg')
+        else:
+            return ('parts.jpg')
     def what_am_i(self):
 
         z = self.info.pid
+
+
         with conn:
             c = conn.cursor()
             c.execute("SELECT * FROM Inventory WHERE ID=?", (z,))
             part = c.fetchone()
-            print(part)
+            print('This is part',part)
 
-            self.info.pid = str(part[0])
-            self.info.part_number = str(part[1])
-            self.info.coordinates = str(part[2])
+            self.info.pid = part[0]
+            print(self.info.pid)
+            self.info.part_number = part[1]
+            print(self.info.part_number)
+            self.info.coordinates = part[2]
 
-            self.info.category = str(part[3])
-            self.info.description = str(part[4])
-            self.info.stock = str(part[5])
-            self.info.price = str(part[6])
-            self.info.condition = str(part[7])
+            self.info.category = part[3]
+            self.info.description = part[4]
+            self.info.stock = part[5]
+            self.info.price = part[6]
+            self.info.condition = part[7]
 
     def update(self, column, new_value):
         with conn:
