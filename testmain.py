@@ -24,15 +24,18 @@ from kivy.uix.checkbox import CheckBox
 from kivy.adapters.models import SelectableDataItem
 from kivy.event import EventDispatcher
 from kivy.graphics import Color
+from kivy.uix.dropdown import DropDown
 from openpyxl import load_workbook
 import time
 import random
 import sqlite3
 import csv
-import barcode
 import json
 import os
-
+import qrcode
+import qrcode.image.svg
+from qrcode.image.pure import PymagingImage
+import png
 
 
 
@@ -185,11 +188,12 @@ class LoginScreen(Screen):
             self.parent.current = 'select'
 
 class BarcodeScreen(Screen):
-    def generate_barcode(self):
-        time.sleep(1)
-        self.parent.current = 'select'
-
-
+    def generate_single_barcode(self):
+        img = qrcode.make("Look at my fancy data" > 'test.png', image_factory=PymagingImage)
+        f = open('test.png', 'wb')
+        w = png.Writer()
+        w.write(f, img)
+        f.close()
 class SelectScreen(Screen):
     pass
 
@@ -273,7 +277,17 @@ class SearchScreen(Screen):
         self.search_item = text
 
 class ResultsScreen(Screen):
-    pass
+
+    def total_cost(self, stock, price):
+        if stock == None:
+            print("Stock = ", stock)
+            return('0')
+        if price == None:
+            print("Price = ", price)
+            return('0')
+        if stock != None and price != None:
+            return str(float(stock)*float(price))
+
 
 
 class MyScreenManager(ScreenManager):
@@ -286,13 +300,6 @@ class MyScreenManager(ScreenManager):
     info = PartDetails()
 
 
-    def total_cost(self, stock, price):
-        if stock == None:
-            print("Stock = ", stock)
-        if price == None:
-            print("Price = ", price)
-        else:
-            print("They equal NONE")
 
     def image_name(self, part_number):
         if os.path.exists(part_number+'.jpg') == True:
@@ -333,6 +340,16 @@ class MyScreenManager(ScreenManager):
             print('command = '+command)
             c.execute(command)
             conn.commit()
+
+    def delete_item(self, pid):
+        print("deleting item", MyScreenManager.info.part_number)
+        print(pid)
+        print(MyScreenManager.info.pid)
+        with conn:
+            c = conn.cursor()
+            c.execute("DELETE FROM Inventory WHERE ID =?", (MyScreenManager.info.pid,))
+            conn.commit()
+
 
 
 class TestMainApp(App):
