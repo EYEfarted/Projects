@@ -36,7 +36,7 @@ import qrcode
 import qrcode.image.svg
 from qrcode.image.pure import PymagingImage
 import png
-
+import subprocess
 
 
 username = ''
@@ -189,11 +189,11 @@ class LoginScreen(Screen):
 
 class BarcodeScreen(Screen):
     def generate_single_barcode(self):
-        img = qrcode.make("Look at my fancy data" > 'test.png', image_factory=PymagingImage)
-        f = open('test.png', 'wb')
-        w = png.Writer()
-        w.write(f, img)
-        f.close()
+
+        data = "Part Number = "+str(MyScreenManager.info.part_number)+"\n"+str(MyScreenManager.info.description)+"\nYou have "+str(MyScreenManager.info.stock)+" in stock."+"\nAt $"+str(MyScreenManager.info.price)+" each"
+        qrcode = subprocess.check_output("qr --factory=svg '"+data+"' > sometest.svg", shell=True)
+
+
 class SelectScreen(Screen):
     pass
 
@@ -286,7 +286,7 @@ class ResultsScreen(Screen):
             print("Price = ", price)
             return('0')
         if stock != None and price != None:
-            return str(float(stock)*float(price))
+            return '%.2f' % (float(stock)*float(price))
 
 
 
