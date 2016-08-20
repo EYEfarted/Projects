@@ -37,7 +37,7 @@ import qrcode.image.svg
 from qrcode.image.pure import PymagingImage
 import png
 import subprocess
-
+import svgwrite
 
 username = ''
 password = ''
@@ -189,10 +189,23 @@ class LoginScreen(Screen):
 
 class BarcodeScreen(Screen):
     def generate_single_barcode(self):
-
+        price = '$'+'%.2f' % float(MyScreenManager.info.price)
         data = "Part Number = "+str(MyScreenManager.info.part_number)+"\n"+str(MyScreenManager.info.description)+"\nYou have "+str(MyScreenManager.info.stock)+" in stock."+"\nAt $"+str(MyScreenManager.info.price)+" each"
-        qrcode = subprocess.check_output("qr --factory=svg '"+data+"' > sometest.svg", shell=True)
+        qrcode = subprocess.check_output("qr '"+data+"' > insertthis.png", shell=True)
+        # img = svgwrite.image.Image('home/adam/Projects/LoginDrilling/insertthis.svg')
+        dwg = svgwrite.Drawing('newtest.svg', profile='tiny')
+        dwg.add(dwg.text("Part Number:", insert=(155, 40)))
+        dwg.add(dwg.text("Description:", insert=(155, 70)))
+        dwg.add(dwg.text("Location:", insert=(155, 100)))
+        dwg.add(dwg.text("Price:", insert=(155, 130)))
+        dwg.add(dwg.text(str(MyScreenManager.info.part_number), insert=(275, 40)))
+        dwg.add(dwg.text(str(MyScreenManager.info.description), insert=(275, 70)))
+        dwg.add(dwg.text(str(MyScreenManager.info.coordinates), insert=(275, 100)))
+        dwg.add(dwg.text(price, insert=(275, 130)))
+        dwg.add(dwg.image('insertthis.png', insert=(5, 5), size=(150, 150)))
 
+        # dwg.add(dwg.image('home/adam/Projects/LoginDrilling/insertthis.png', insert=(50, 200)))
+        dwg.save()
 
 class SelectScreen(Screen):
     pass
@@ -277,6 +290,11 @@ class SearchScreen(Screen):
         self.search_item = text
 
 class ResultsScreen(Screen):
+    def cost(self, price):
+        if price == None:
+            return '0'
+        else:
+            return '$'+'%.2f' % float(price)
 
     def total_cost(self, stock, price):
         if stock == None:
@@ -286,7 +304,7 @@ class ResultsScreen(Screen):
             print("Price = ", price)
             return('0')
         if stock != None and price != None:
-            return '%.2f' % (float(stock)*float(price))
+            return '$'+'%.2f' % (float(stock)*float(price))
 
 
 

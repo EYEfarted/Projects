@@ -169,6 +169,8 @@ SearchForm:
     description_popup: description_popup.__self__
     stock_popup: stock_popup.__self__
     price_popup: price_popup.__self__
+    delete_popup: delete_popup.__self__
+    location_popup: location_popup.__self__
     GridLayout:
         id: g1
         cols: 2
@@ -207,13 +209,13 @@ SearchForm:
                     text_size: self.width, None
                     size: self.texture_size
                 Label:
-                    text: 'Cost: '+'$'
+                    text: 'Cost: '
                     halign: 'right'
                     padding_x: '5sp'
                     text_size: self.width, None
                     size: self.texture_size
                 Label:
-                    text: 'Total: '+'$'
+                    text: 'Total: '
                     halign: 'right'
                     padding_x: '5sp'
                     text_size: self.width, None
@@ -277,11 +279,11 @@ SearchForm:
                     background_normal: ''
                     background_color: 0,0,0,0
                     id: price
-                    text: str(root.manager.info.price)
+                    text: str(root.cost(root.manager.info.price))
                     halign: 'left'
                     padding_x: '5sp'
                     text_size: self.width, None
-                        # size: self.texture_size
+                    size: self.texture_size
                 Label:
                     id: total
                     text:  str(root.total_cost(root.manager.info.stock, root.manager.info.price))
@@ -289,27 +291,77 @@ SearchForm:
                     padding_x: '5sp'
                     text_size: self.width, None
                     size: self.texture_size
-        Button:
-            background_normal: ''
-            on_press: print("got it")
-            Image:
-                source: root.manager.image_name(str(root.manager.info.part_number))
-                y: self.parent.y
-                x: self.parent.x
-                size: self.parent.width, self.parent.height
-
+        BoxLayout:
+            orientation: 'vertical'
+            Button:
+                size_hint_y: 0.1
+                text: "Delete Item"
+                on_press: root.delete_popup.open()
+            Button:
+                background_normal: ''
+                on_press: print("got it")
+                Image:
+                    source: root.manager.image_name(str(root.manager.info.part_number))
+                    y: self.parent.y
+                    x: self.parent.x
+                    size: self.parent.width, self.parent.height
 
 
         Button:
             size_hint_y: 0.1
-            text: "go back"
+            text: "Go Back"
             on_press: app.root.current = 'search'
         Button:
             size_hint_y: 0.1
-            text: "Delete Item"
-            on_press: app.root.delete_item(root.manager.info.pid)
+            text: "Change Location"
+            on_press: root.location_popup.open()
 
 
+        Popup:
+            id: location_popup
+            size_hint: (None, None)
+            size: (root.width,400)
+            on_parent: if self.parent == g1: g1.remove_widget(self)
+            title: "Change Location"
+            title_size: '35sp'
+            BoxLayout:
+                orientation: 'vertical'
+
+                TextInput:
+                    id: location
+                    multiline: False
+                    text: str(root.manager.info.coordinates)
+                    on_text_validate: app.root.update("Shelf", self.text), app.root.what_am_i(), location_popup.dismiss()
+                BoxLayout:
+                    size_hint_y: 0.2
+                    Button:
+                        text: "Accept"
+                        on_press: location_popup.dismiss(), app.root.update("Shelf", "'"+location.text+"'")
+                        on_release:  app.root.what_am_i()
+                    Button:
+                        text: "Dismiss"
+                        on_press: location_popup.dismiss()
+                        on_release: app.root.what_am_i()
+
+        Popup:
+            id: delete_popup
+            size_hint: (None, None)
+            size: (root.width,400)
+            on_parent: if self.parent == g1: g1.remove_widget(self)
+            title: "Are you sure you want to delete this item?"
+            title_size: '35sp'
+            BoxLayout:
+                Button:
+                    text: "Yes"
+                    background_color: 0,1,0,1
+                    font_size: 50
+                    on_press: app.root.delete_item(root.manager.info.pid)
+                    on_release: delete_popup.dismiss()
+                Button:
+                    text: "No"
+                    background_color: 1,0,0,1
+                    font_size: 50
+                    on_press: delete_popup.dismiss()
 
         Popup:
             id: part_popup
