@@ -203,9 +203,8 @@ class BarcodeScreen(Screen):
         dwg.add(dwg.text(str(MyScreenManager.info.coordinates), insert=(275, 100)))
         dwg.add(dwg.text(price, insert=(275, 130)))
         dwg.add(dwg.image('insertthis.png', insert=(5, 5), size=(150, 150)))
-
-        # dwg.add(dwg.image('home/adam/Projects/LoginDrilling/insertthis.png', insert=(50, 200)))
         dwg.save()
+
 
 class SelectScreen(Screen):
     pass
@@ -306,6 +305,23 @@ class ResultsScreen(Screen):
         if stock != None and price != None:
             return '$'+'%.2f' % (float(stock)*float(price))
 
+
+    def generate_single_barcode(self):
+        price = '$'+'%.2f' % float(MyScreenManager.info.price)
+        data = "Part Number = "+str(MyScreenManager.info.part_number)+"\n"+str(MyScreenManager.info.description)+"\nYou have "+str(MyScreenManager.info.stock)+" in stock."+"\nAt $"+str(MyScreenManager.info.price)+" each"
+        qrcode = subprocess.check_output("qr '"+data+"' > insertthis.png", shell=True)
+        dwg = svgwrite.Drawing('newtest.svg', profile='tiny')
+        dwg.add(dwg.text("Part Number:", insert=(155, 40)))
+        dwg.add(dwg.text("Description:", insert=(155, 70)))
+        dwg.add(dwg.text("Location:", insert=(155, 100)))
+        dwg.add(dwg.text("Price:", insert=(155, 130)))
+        dwg.add(dwg.text(str(MyScreenManager.info.part_number), insert=(275, 40)))
+        dwg.add(dwg.text(str(MyScreenManager.info.description), insert=(275, 70)))
+        dwg.add(dwg.text(str(MyScreenManager.info.coordinates), insert=(275, 100)))
+        dwg.add(dwg.text(price, insert=(275, 130)))
+        dwg.add(dwg.image('insertthis.png', insert=(5, 5), size=(150, 150)))
+        dwg.save()
+        # subprocess.Popen('inkscape bufsize=0 -z -e test.png test.svg')
 
 
 class MyScreenManager(ScreenManager):

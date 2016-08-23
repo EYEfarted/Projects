@@ -152,6 +152,9 @@ SearchForm:
         Button:
             text: 'QRCode Label Generator'
             font_size: 20
+            text_size: self.size
+            halign: 'center'
+            valign: 'middle'
             on_press: app.root.current  = 'barcode'
             on_release: print("Now we need to generate a qr code label for the item") # app.root.current  = 'reports'
         Button:
@@ -297,7 +300,9 @@ SearchForm:
                 size_hint_y: 0.1
                 text: "Delete Item"
                 on_press: root.delete_popup.open()
+
             Button:
+                size_hint_y: 0.6
                 background_normal: ''
                 on_press: print("got it")
                 Image:
@@ -305,8 +310,16 @@ SearchForm:
                     y: self.parent.y
                     x: self.parent.x
                     size: self.parent.width, self.parent.height
+            Image:
+                size_hint_y: 0.3
+                source: 'insertthis.png'
 
-
+            Button:
+                size_hint_y: 0.1
+                text: "Print Label"
+                on_press: root.generate_single_barcode()
+                on_release: app.root.what_am_i()
+                
         Button:
             size_hint_y: 0.1
             text: "Go Back"
